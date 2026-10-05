@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ResuMind AI | Smart Resume Analyzer & Interview Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <!-- Client-side Document & Image Extraction Engines (PDF, OCR Image, Word DOCX) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+</head>
+<body class="dark-theme">
+
+  <!-- ==========================================================================
+       DEDICATED FULL-SCREEN AUTHENTICATION & LANDING PAGE (VISUAL LOGIN / SIGNUP)
+       ========================================================================== -->
+  <div id="authLandingView" class="auth-landing-container">
+    <div class="auth-landing-bg">
+      <div class="glow-sphere sphere-1"></div>
+      <div class="glow-sphere sphere-2"></div>
+    </div>
+
+    <div class="auth-landing-content">
+      <!-- Left Column: Branding & Feature Highlights -->
+      <div class="auth-brand-col">
+        <div class="brand-large">
+          <div class="logo-icon-lg">
+            <i class="fa-solid fa-brain"></i>
+          </div>
+          <h1>ResuMind <span class="badge-ai-lg">AI</span></h1>
+        </div>
+
+        <h2 class="auth-hero-title">Smart Resume Analyzer & AI Interview Portal</h2>
+        <p class="auth-hero-subtitle">Optimize your resume for ATS screening, match against target job postings, and practice live mock interview rounds with real-time STAR feedback.</p>
+
+        <div class="feature-bullets">
+          <div class="f-item">
+            <div class="f-icon purple"><i class="fa-solid fa-file-contract"></i></div>
+            <div>
+              <strong>Instant ATS Resume Audit</strong>
+              <p>Get accurate compatibility scores, keyword density, and bullet point rewrites.</p>
+            </div>
+          </div>
+
+          <div class="f-item">
+            <div class="f-icon blue"><i class="fa-solid fa-headset"></i></div>
+            <div>
+              <strong>AI Mock Interview Coach</strong>
+              <p>Practice technical & behavioral rounds with personalized STAR evaluation.</p>
+            </div>
+          </div>
+
+          <div class="f-item">
+            <div class="f-icon emerald"><i class="fa-solid fa-database"></i></div>
+            <div>
+              <strong>Persistent SQLite Database Storage</strong>
+              <p>Sign in anytime to access your saved resume audits, JD match matrices, and scores.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="auth-status-chip">
+          <span class="dot online"></span> <strong>Database Engine:</strong> Connected to SQLite Server (`resumind.db`)
+        </div>
+      </div>
+
+      <!-- Right Column: Login / Sign Up Card -->
+      <div class="auth-card-col">
+        <div class="glass-card auth-box">
+          <div class="auth-box-header">
+            <div class="auth-tabs">
+              <button class="auth-tab-btn active" id="pageTabLogin" onclick="switchAuthPageView('login')">
+                <i class="fa-solid fa-right-to-bracket"></i> Sign In
+              </button>
+              <button class="auth-tab-btn" id="pageTabRegister" onclick="switchAuthPageView('register')">
+                <i class="fa-solid fa-user-plus"></i> Create Account
+              </button>
+            </div>
+          </div>
+
+          <div class="auth-box-body mt-4">
+            <!-- SIGN IN FORM -->
+            <form id="pageLoginForm" onsubmit="handlePageLoginSubmit(event)">
+              <h3 class="auth-form-title">Welcome Back!</h3>
+              <p class="auth-form-sub">Sign in with your email and password to access your portal.</p>
+
+              <div class="form-group mt-3">
+                <label>Email Address</label>
+                <div class="input-icon-wrapper">
+                  <i class="fa-regular fa-envelope input-icon"></i>
+                  <input type="email" id="pLoginEmail" class="form-control ps-icon" placeholder="archit@example.com" required>
+                </div>
+              </div>
+
+              <div class="form-group mt-3">
+                <label>Password</label>
+                <div class="input-icon-wrapper">
+                  <i class="fa-solid fa-lock input-icon"></i>
+                  <input type="password" id="pLoginPassword" class="form-control ps-icon" placeholder="••••••••" required>
+                </div>
+              </div>
+
+              <div class="d-flex justify-content-between align-items-center mt-3" style="font-size: 0.82rem;">
+                <label class="d-flex align-items-center gap-2" style="cursor: pointer;">
+                  <input type="checkbox" checked> Remember me
+                </label>
+                <a href="#" class="text-purple" onclick="alert('Password reset link sent to registered email.')">Forgot Password?</a>
+              </div>
+
+              <button type="submit" class="btn btn-primary w-100 mt-4 btn-lg" id="pLoginSubmitBtn">
+                <i class="fa-solid fa-right-to-bracket"></i> Sign In to Account
+              </button>
+
+              <div class="or-divider mt-4"><span>OR QUICK ACCESS</span></div>
+
+              <div class="demo-login-grid mt-3">
+                <button type="button" class="btn-demo-chip" onclick="quickLogin('archit@example.com', 'Archit Prajapati', 'Senior Full Stack Engineer')">
+                  <span class="avatar-xs">AP</span> Log in as Archit (Dev)
+                </button>
+                <button type="button" class="btn-demo-chip" onclick="quickLogin('sarah@example.com', 'Sarah Jenkins', 'Data Scientist')">
+                  <span class="avatar-xs">SJ</span> Log in as Sarah (Data)
+                </button>
+              </div>
+            </form>
+
+            <!-- CREATE ACCOUNT FORM -->
+            <form id="pageRegisterForm" class="hidden" onsubmit="handlePageRegisterSubmit(event)">
+              <h3 class="auth-form-title">Create Free Account</h3>
+              <p class="auth-form-sub">Register to save your resume versions, job matches, and interview logs to the database.</p>
+
+              <div class="form-group mt-3">
+                <label>Full Name</label>
+                <div class="input-icon-wrapper">
+                  <i class="fa-regular fa-user input-icon"></i>
+                  <input type="text" id="pRegName" class="form-control ps-icon" placeholder="Archit Prajapati" required>
+                </div>
+              </div>
+
+              <div class="form-group mt-3">
+                <label>Email Address</label>
+                <div class="input-icon-wrapper">
+                  <i class="fa-regular fa-envelope input-icon"></i>
+                  <input type="email" id="pRegEmail" class="form-control ps-icon" placeholder="archit@example.com" required>
+                </div>
+              </div>
+
+              <div class="form-group mt-3">
+                <label>Target Job Role</label>
+                <select id="pRegRole" class="form-select">
+                  <option value="Senior Full Stack Software Engineer">Senior Full Stack Engineer</option>
+                  <option value="Backend Developer (Node/Python)">Backend Developer</option>
+                  <option value="Frontend Engineer (React/Next)">Frontend Engineer</option>
+                  <option value="Data Scientist / AI Engineer">Data Scientist / AI Specialist</option>
+                  <option value="DevOps & Cloud Engineer">DevOps & Cloud Engineer</option>
+                </select>
+              </div>
+
+              <div class="form-group mt-3">
+                <label>Password</label>
+                <div class="input-icon-wrapper">
+                  <i class="fa-solid fa-lock input-icon"></i>
+                  <input type="password" id="pRegPassword" class="form-control ps-icon" placeholder="Create strong password" required>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary w-100 mt-4 btn-lg" id="pRegisterSubmitBtn">
+                <i class="fa-solid fa-user-plus"></i> Create Account & Save to Database
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MAIN APPLICATION PORTAL (VISIBLE AFTER USER LOGS IN)
+       ========================================================================== -->
+  <div class="app-container hidden" id="mainAppPortal">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo-icon">
+          <i class="fa-solid fa-brain"></i>
+        </div>
+        <div class="brand-text">
+          <h2>ResuMind <span class="badge-ai">AI</span></h2>
+          <p>Career Intelligence Suite</p>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" data-tab="dashboard">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span>Dashboard</span>
+        </button>
+        <button class="nav-item" data-tab="analyzer">
+          <i class="fa-solid fa-file-contract"></i>
+          <span>Resume Analyzer & ATS</span>
+        </button>
+        <button class="nav-item" data-tab="jd-match">
+          <i class="fa-solid fa-bullseye"></i>
+          <span>JD Matcher</span>
+        </button>
+        <button class="nav-item" data-tab="interview">
+          <i class="fa-solid fa-headset"></i>
+          <span>AI Mock Interview</span>
+          <span class="live-tag">LIVE</span>
+        </button>
+        <button class="nav-item" data-tab="builder">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          <span>AI Resume Builder</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-card">
+        <div class="sparkle-icon"><i class="fa-solid fa-bolt"></i></div>
+        <h4 id="sidebarAiModelText">ResuMind AI Active</h4>
+        <p id="sidebarAiProviderText">Backend AI Engine Connected</p>
+        <div class="status-indicator">
+          <span class="dot online" id="aiStatusDot"></span> <span id="aiStatusText">AI Online</span>
+        </div>
+      </div>
+
+      <!-- User Profile Sidebar Footer -->
+      <div class="user-profile-sm" id="sidebarUserProfile">
+        <div class="avatar" id="sidebarAvatar">AP</div>
+        <div class="user-info">
+          <span class="name" id="sidebarUserName">Archit Prajapati</span>
+          <span class="role" id="sidebarUserRole">Software Engineer</span>
+        </div>
+        <button class="btn-icon-xs ms-auto" title="Sign Out" onclick="logoutUser()"><i class="fa-solid fa-right-from-bracket"></i></button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Header -->
+      <header class="top-header">
+        <div class="header-search">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" placeholder="Search saved analyses, interview scenarios, templates...">
+        </div>
+        <div class="header-actions">
+          <!-- Auth Header Pill -->
+          <div id="authHeaderState"></div>
+
+          <!-- Real AI is configured securely on the backend -->
+          <button class="btn-icon" title="Notifications"><i class="fa-regular fa-bell"></i></button>
+          <button class="btn btn-primary btn-sm" id="quickAnalyzeBtn" onclick="switchTab('analyzer')">
+            <i class="fa-solid fa-plus"></i> New Analysis
+          </button>
+        </div>
+      </header>
+
+      <!-- TAB 1: DASHBOARD -->
+      <section id="tab-dashboard" class="tab-page active">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Welcome back, <span id="welcomeUserNameText">Archit</span>!</h1>
+            <p class="page-subtitle">Track your resume optimizations, ATS scores, and mock interview performance.</p>
+          </div>
+          <div class="date-badge" id="aiApiBannerBadge">
+            <i class="fa-solid fa-database"></i> Database: <span class="text-green" id="dbStatusSpan">SQLite Active (`resumind.db`)</span>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card glass-card">
+            <div class="stat-icon purple"><i class="fa-solid fa-gauge-high"></i></div>
+            <div class="stat-details">
+              <span class="stat-label">Avg ATS Score</span>
+              <div class="stat-value-group">
+                <h3 class="stat-number" id="dashAtsScore">88/100</h3>
+                <span class="trend positive"><i class="fa-solid fa-arrow-trend-up"></i> +14%</span>
+              </div>
+              <p class="stat-sub">Top candidate tier</p>
+            </div>
+          </div>
+
+          <div class="stat-card glass-card">
+            <div class="stat-icon blue"><i class="fa-solid fa-comments"></i></div>
+            <div class="stat-details">
+              <span class="stat-label">Mock Interviews</span>
+              <div class="stat-value-group">
+                <h3 class="stat-number" id="dashInterviewCount">12 Sessions</h3>
+                <span class="trend positive"><i class="fa-solid fa-circle-check"></i> 85% Mastery</span>
+              </div>
+              <p class="stat-sub">Completed with AI feedback</p>
+            </div>
+          </div>
+
+          <div class="stat-card glass-card">
+            <div class="stat-icon emerald"><i class="fa-solid fa-list-check"></i></div>
+            <div class="stat-details">
+              <span class="stat-label">Keyword Match Rate</span>
+              <div class="stat-value-group">
+                <h3 class="stat-number" id="dashMatchRate">92%</h3>
+                <span class="trend positive"><i class="fa-solid fa-shield-halved"></i> Strong</span>
+              </div>
+              <p class="stat-sub">Aligned with target JD</p>
+            </div>
+          </div>
+
+          <div class="stat-card glass-card">
+            <div class="stat-icon amber"><i class="fa-solid fa-award"></i></div>
+            <div class="stat-details">
+              <span class="stat-label">Interview Readiness</span>
+              <div class="stat-value-group">
+                <h3 class="stat-number" id="dashReadinessLevel">High Ready</h3>
+                <span class="badge badge-success">Shortlist Tier</span>
+              </div>
+              <p class="stat-sub">Based on AI simulations</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- Recent Analyses -->
+          <div class="dashboard-col left-col">
+            <div class="card glass-card">
+              <div class="card-header">
+                <h3><i class="fa-solid fa-clock-rotate-left"></i> My Saved Resume Audits</h3>
+                <button class="btn-text" onclick="switchTab('analyzer')">View All</button>
+              </div>
+              <div class="audit-list" id="dashboardAuditList"></div>
+            </div>
+
+            <!-- Quick Action Banners -->
+            <div class="action-banner-grid">
+              <div class="banner-card gradient-purple" onclick="switchTab('interview')">
+                <div class="banner-text">
+                  <h3>Start AI Mock Interview</h3>
+                  <p>Practice live technical & behavioral questions with real-time feedback.</p>
+                  <span class="btn-link">Launch Simulator <i class="fa-solid fa-arrow-right"></i></span>
+                </div>
+                <div class="banner-illustration"><i class="fa-solid fa-headset"></i></div>
+              </div>
+
+              <div class="banner-card gradient-blue" onclick="switchTab('jd-match')">
+                <div class="banner-text">
+                  <h3>Match Against Job Post</h3>
+                  <p>Paste a job description to get instant keyword gap analysis.</p>
+                  <span class="btn-link">Run Matcher <i class="fa-solid fa-arrow-right"></i></span>
+                </div>
+                <div class="banner-illustration"><i class="fa-solid fa-bullseye"></i></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Interview Readiness Radar & Insights -->
+          <div class="dashboard-col right-col">
+            <div class="card glass-card">
+              <div class="card-header">
+                <h3><i class="fa-solid fa-chart-radar"></i> Skill Breakdown</h3>
+              </div>
+              <div class="skill-bars">
+                <div class="skill-bar-item">
+                  <div class="skill-info">
+                    <span>Technical Knowledge</span>
+                    <span>90%</span>
+                  </div>
+                  <div class="progress-bg"><div class="progress-fill" style="width: 90%;"></div></div>
+                </div>
+                <div class="skill-bar-item">
+                  <div class="skill-info">
+                    <span>STAR Method Answer Structure</span>
+                    <span>82%</span>
+                  </div>
+                  <div class="progress-bg"><div class="progress-fill" style="width: 82%;"></div></div>
+                </div>
+                <div class="skill-bar-item">
+                  <div class="skill-info">
+                    <span>ATS Formatting & Keywords</span>
+                    <span>95%</span>
+                  </div>
+                  <div class="progress-bg"><div class="progress-fill" style="width: 95%;"></div></div>
+                </div>
+              </div>
+              <div class="ai-tip-box mt-4">
+                <i class="fa-solid fa-database"></i>
+                <p><strong>Database Status:</strong> All your resume audits, mock interview scores, and custom templates are securely saved to your account in SQLite!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: RESUME ANALYZER & ATS -->
+      <section id="tab-analyzer" class="tab-page">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Smart Resume Audit & ATS Breakdown</h1>
+            <p class="page-subtitle">Upload your resume in <strong>PDF or Image format (PNG, JPG)</strong> for automatic AI text extraction, ATS scoring, and bullet improvements.</p>
+          </div>
+        </div>
+
+        <div class="analyzer-grid">
+          <div class="card glass-card upload-section">
+            <h3><i class="fa-solid fa-cloud-arrow-up"></i> Upload Resume (PDF / Image / DOCX)</h3>
+            
+            <div class="drop-zone" id="dropZone">
+              <div class="drop-zone-icon"><i class="fa-solid fa-file-arrow-up"></i></div>
+              <h4>Drag & drop your Resume file</h4>
+              <p>Supports <strong>PDF, PNG, JPG, JPEG, WEBP, DOCX, TXT</strong></p>
+              <div class="or-divider"><span>OR</span></div>
+              <input type="file" id="resumeFileInput" hidden accept=".pdf,.png,.jpg,.jpeg,.webp,.bmp,.tiff,.docx,.txt">
+              <button class="btn btn-secondary" onclick="document.getElementById('resumeFileInput').click()">
+                <i class="fa-solid fa-folder-open"></i> Browse Files
+              </button>
+            </div>
+
+            <!-- Auto-Extraction & File Preview Card -->
+            <div id="fileUploadDetailsCard" class="file-details-card hidden mt-3">
+              <div class="file-details-header">
+                <div class="file-icon-box" id="fileTypeIconBox">
+                  <i class="fa-solid fa-file-pdf"></i>
+                </div>
+                <div class="file-info-meta">
+                  <h4 id="uploadedFileName">Resume_File.pdf</h4>
+                  <div class="file-meta-sub">
+                    <span id="uploadedFileSize">1.2 MB</span> • <span class="badge badge-purple" id="uploadedFileTypeBadge">PDF Document</span>
+                  </div>
+                </div>
+                <button class="btn-icon-xs ms-auto" title="Remove / Upload different file" onclick="resetUploadedFile()">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+
+              <!-- Extraction Status Feedback -->
+              <div class="extraction-status-bar mt-2" id="extractionStatusBar">
+                <div class="d-flex align-items-center gap-2" id="extractionStatusLine">
+                  <span class="spinner-sm" id="extractionSpinner"><i class="fa-solid fa-spinner fa-spin text-purple"></i></span>
+                  <span id="extractionStatusText">Extracting text automatically from file...</span>
+                </div>
+                <div class="extraction-preview-text hidden mt-2" id="extractionPreviewBox">
+                  <div class="preview-header">
+                    <small class="text-dim"><i class="fa-solid fa-check text-green"></i> Extracted Resume Content:</small>
+                    <span class="badge badge-secondary" id="wordCountBadge">0 words</span>
+                  </div>
+                  <div class="snippet-preview" id="extractionSnippet"></div>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn btn-primary w-100 mt-3" id="analyzeResumeBtn" disabled>
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Analyze Resume with AI
+            </button>
+            
+            <div class="sample-load-box">
+              <span>Or test with sample profiles:</span>
+              <div class="sample-btns">
+                <button class="btn-chip" onclick="loadSampleResume('software_eng')"><i class="fa-solid fa-code"></i> Fullstack Dev</button>
+                <button class="btn-chip" onclick="loadSampleResume('data_sci')"><i class="fa-solid fa-chart-line"></i> Data Scientist</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card glass-card audit-results-section" id="analysisResults">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-square-poll-vertical"></i> AI Audit Report</h3>
+              <span class="badge badge-purple" id="resumeRoleTag">Target: Senior Software Engineer</span>
+            </div>
+
+            <div class="score-banner">
+              <div class="overall-score-circle">
+                <svg viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="42" class="bg-circle"></circle>
+                  <circle cx="50" cy="50" r="42" class="score-progress" id="scoreCircleProgress" style="stroke-dashoffset: 40;"></circle>
+                </svg>
+                <div class="score-text">
+                  <span id="scoreValue">88</span>
+                  <small>/100</small>
+                </div>
+              </div>
+              <div class="score-summary">
+                <h4 id="scoreHeadline">Excellent ATS Compatibility!</h4>
+                <p id="scoreSubhead">Your resume parses well with standard applicant tracking systems (Greenhouse, Lever, Workday).</p>
+                <div class="score-tags" id="scoreTagsBox">
+                  <span class="tag tag-pass"><i class="fa-solid fa-check"></i> Clean Layout</span>
+                  <span class="tag tag-pass"><i class="fa-solid fa-check"></i> Standard Fonts</span>
+                  <span class="tag tag-warn"><i class="fa-solid fa-triangle-exclamation"></i> 2 Weak Action Verbs</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="report-tabs">
+              <button class="report-tab-btn active" data-report="ats">ATS Checks</button>
+              <button class="report-tab-btn" data-report="keywords">Keywords Found</button>
+              <button class="report-tab-btn" data-report="bullets">Bullet Point Enhancer</button>
+            </div>
+
+            <div class="report-content-box">
+              <div id="subtab-ats" class="subtab-content active">
+                <div class="check-list" id="atsCheckList">
+                  <div class="check-item status-pass">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <div class="check-details">
+                      <strong>Contact Info & Links</strong>
+                      <p>Email, Phone, LinkedIn, and GitHub links cleanly parsed.</p>
+                    </div>
+                  </div>
+                  <div class="check-item status-pass">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <div class="check-details">
+                      <strong>Section Headings</strong>
+                      <p>Standard sections detected: Experience, Education, Projects, Skills.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="subtab-keywords" class="subtab-content">
+                <div class="keyword-cloud-section">
+                  <h4>Extracted Core Skills</h4>
+                  <div class="pill-group" id="detectedSkills">
+                    <span class="pill pill-green">JavaScript (ES6+)</span>
+                    <span class="pill pill-green">React.js</span>
+                    <span class="pill pill-green">Node.js</span>
+                    <span class="pill pill-green">TypeScript</span>
+                    <span class="pill pill-green">REST APIs</span>
+                    <span class="pill pill-green">PostgreSQL</span>
+                  </div>
+
+                  <h4 class="mt-4">Missing High-Impact Industry Keywords</h4>
+                  <div class="pill-group" id="missingSkills">
+                    <span class="pill pill-red">+ CI/CD Pipelines</span>
+                    <span class="pill pill-red">+ GraphQL</span>
+                    <span class="pill pill-red">+ Microservices</span>
+                  </div>
+                </div>
+              </div>
+
+              <div id="subtab-bullets" class="subtab-content">
+                <div id="bulletEnhanceContainer">
+                  <div class="bullet-rewrite-card">
+                    <div class="original-bullet">
+                      <span class="label">Original Bullet Point:</span>
+                      <p>"Worked on backend APIs using Node.js and improved application speed."</p>
+                    </div>
+                    <div class="ai-suggestion-box">
+                      <span class="label-ai"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Re-engineered (STAR Method):</span>
+                      <p class="highlight-text">"Architected and optimized scalable RESTful microservices using Node.js & Express, reducing API response times by 38% for over 100k daily active users."</p>
+                      <button class="btn btn-secondary btn-xs" onclick="copyText(this)">Copy Rewritten Bullet</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: JD MATCHER -->
+      <section id="tab-jd-match" class="tab-page">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Job Description vs Resume Matcher</h1>
+            <p class="page-subtitle">Compare your resume against a specific target job posting to uncover exact keyword gaps with AI.</p>
+          </div>
+        </div>
+
+        <div class="jd-grid">
+          <div class="card glass-card">
+            <h3><i class="fa-solid fa-file-user"></i> 1. Enter Resume Text</h3>
+            <textarea id="jdResumeTextArea" class="form-textarea" rows="5" placeholder="Paste your resume text here (or leave blank to use analyzed resume)..."></textarea>
+
+            <h3 class="mt-4"><i class="fa-solid fa-align-left"></i> 2. Paste Job Description (JD)</h3>
+            <textarea id="jdTextArea" class="form-textarea" rows="6" placeholder="Paste the target job requirements, responsibilities, and required qualifications here..."></textarea>
+            
+            <button class="btn btn-primary w-100 mt-3" id="runJdMatchBtn">
+              <i class="fa-solid fa-bolt"></i> Run AI Matcher & Skill Gap Analysis
+            </button>
+          </div>
+
+          <div class="card glass-card" id="jdMatchOutput">
+            <h3><i class="fa-solid fa-bullseye"></i> Job Match Analysis</h3>
+            
+            <div class="match-score-header">
+              <div class="match-badge">
+                <span class="match-percent" id="matchPercentVal">78%</span>
+                <span class="match-label">Match Score</span>
+              </div>
+              <div class="match-summary-text">
+                <h4 id="matchTitle">Moderate-High Alignment</h4>
+                <p id="matchDesc">You meet 8 out of 11 core requirements for this position. Adding specific missing tech terms will put your profile in the shortlisted tier.</p>
+              </div>
+            </div>
+
+            <div class="gap-matrix mt-4">
+              <h4>Skill Alignment Matrix</h4>
+              <table class="matrix-table">
+                <thead>
+                  <tr>
+                    <th>Required Skill in JD</th>
+                    <th>Status in Resume</th>
+                    <th>Recommendation</th>
+                  </tr>
+                </thead>
+                <tbody id="matrixBody">
+                  <tr>
+                    <td><strong>Node.js & Express</strong></td>
+                    <td><span class="tag tag-pass">Found</span></td>
+                    <td>Keep in top skills section</td>
+                  </tr>
+                  <tr>
+                    <td><strong>React.js & State Mgmt</strong></td>
+                    <td><span class="tag tag-pass">Found</span></td>
+                    <td>Highlight Redux / Context API</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Kubernetes / Helm</strong></td>
+                    <td><span class="tag tag-fail">Missing</span></td>
+                    <td>Add under DevOps / Deployment tools</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="ai-tip-box mt-4">
+              <i class="fa-solid fa-lightbulb"></i>
+              <p id="jdMatchProTip"><strong>Pro-Tip:</strong> Tailor your resume summary by weaving key missing job posting terms into your latest project experience.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: AI MOCK INTERVIEW SIMULATOR -->
+      <section id="tab-interview" class="tab-page">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">AI Mock Interview Simulator</h1>
+            <p class="page-subtitle">Practice interactive tech & behavioral interview rounds with real-time AI evaluation & STAR feedback.</p>
+          </div>
+          <div class="badge badge-purple"><i class="fa-solid fa-brain"></i> Real AI Interview Coach</div>
+        </div>
+
+        <div class="interview-container">
+          <div class="card glass-card interview-setup" id="interviewSetupCard">
+            <h3><i class="fa-solid fa-sliders"></i> Configure Interview Session</h3>
+            <div class="form-row mt-3">
+              <div class="form-group">
+                <label>Job Role Focus</label>
+                <select id="interviewRoleSelect" class="form-select">
+                  <option value="Full Stack Developer">Full Stack Software Engineer</option>
+                  <option value="Backend Developer">Backend (Node.js/Python) Engineer</option>
+                  <option value="Frontend Developer">Frontend (React/Next.js) Specialist</option>
+                  <option value="Data Scientist / AI Engineer">Data Scientist / AI Engineer</option>
+                  <option value="DevOps / Cloud Engineer">DevOps & Cloud Engineer</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Round Type</label>
+                <select id="interviewRoundSelect" class="form-select">
+                  <option value="Technical Core & System Architecture">Technical Core & System Architecture</option>
+                  <option value="Behavioral (STAR Method)">Behavioral & Leadership (STAR Method)</option>
+                  <option value="HR & Culture Fit">HR & Career Goals</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Difficulty Level</label>
+                <select id="interviewDiffSelect" class="form-select">
+                  <option value="Mid-Level">Mid-Level (3+ yrs exp)</option>
+                  <option value="Senior Lead">Senior / Lead Architect</option>
+                  <option value="Entry Level">Entry / Junior Engineer</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-lg mt-4" id="startInterviewBtn">
+              <i class="fa-solid fa-play"></i> Launch AI Interview Session
+            </button>
+          </div>
+
+          <div class="interview-stage hidden" id="interviewStage">
+            <div class="interviewer-card glass-card">
+              <div class="interviewer-header">
+                <div class="ai-avatar">
+                  <i class="fa-solid fa-robot"></i>
+                  <span class="pulse-ring"></span>
+                </div>
+                <div>
+                  <h4>AI Interviewer (Alex)</h4>
+                  <span class="role-badge" id="activeRoleBadge">Full Stack Engineer Round</span>
+                </div>
+                <div class="session-timer ms-auto">
+                  <i class="fa-solid fa-clock"></i> <span id="sessionTime">Live Session</span>
+                </div>
+              </div>
+
+              <div class="question-box">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="q-label" id="qNumberLabel">Question 1 of 3</span>
+                  <button class="btn btn-secondary btn-xs" id="genNewAiQuestionBtn" title="Generate New AI Question"><i class="fa-solid fa-arrows-rotate"></i> Generate New Question</button>
+                </div>
+                <h3 id="currentQuestionText">"Can you walk me through a complex architectural challenge you faced when building a Node.js microservice backend, and how you handled high concurrency?"</h3>
+                <div class="q-hints mt-2">
+                  <span class="hint-tag" id="qHintTag"><i class="fa-solid fa-tag"></i> Key Focus: Bottlenecks, Caching, Event Loop</span>
+                </div>
+              </div>
+
+              <div class="answer-section mt-4">
+                <div class="answer-header">
+                  <label><i class="fa-solid fa-microphone"></i> Your Response (Speak or Type)</label>
+                  <div class="input-mode-toggle">
+                    <button class="mode-btn active" id="btnModeText"><i class="fa-solid fa-keyboard"></i> Text</button>
+                    <button class="mode-btn" id="btnModeVoice"><i class="fa-solid fa-microphone"></i> Voice Mic</button>
+                  </div>
+                </div>
+
+                <textarea id="candidateAnswerText" class="form-textarea" rows="5" placeholder="Type your answer using the STAR method (Situation, Task, Action, Result)... Or click 'Voice Mic' to speak."></textarea>
+                
+                <div class="answer-controls mt-3">
+                  <button class="btn btn-secondary" onclick="loadSampleAnswer()">
+                    <i class="fa-solid fa-magic"></i> Insert Example Answer
+                  </button>
+                  <button class="btn btn-primary ms-auto" id="submitAnswerBtn">
+                    Submit Answer for AI Evaluation <i class="fa-solid fa-paper-plane"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card glass-card evaluation-panel hidden" id="evaluationPanel">
+              <div class="card-header">
+                <h3><i class="fa-solid fa-award"></i> Live AI STAR Feedback</h3>
+                <span class="badge badge-success" id="evalScoreBadge">Score: 8.5/10</span>
+              </div>
+
+              <div class="eval-grid mt-3">
+                <div class="eval-box">
+                  <h4><i class="fa-solid fa-thumbs-up text-green"></i> Key Strengths</h4>
+                  <ul class="eval-list" id="evalStrengths">
+                    <li>Clearly articulated the architectural challenge.</li>
+                  </ul>
+                </div>
+
+                <div class="eval-box">
+                  <h4><i class="fa-solid fa-triangle-exclamation text-amber"></i> Missed Key Concepts</h4>
+                  <ul class="eval-list" id="evalMissed">
+                    <li>Add specific quantitative metrics.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="improved-answer-box mt-3">
+                <h4><i class="fa-solid fa-wand-magic-sparkles text-purple"></i> Model Answer Strategy</h4>
+                <p id="improvedAnswerText">"In my previous project..."</p>
+              </div>
+
+              <div class="mt-4 text-end">
+                <button class="btn btn-primary" id="nextQuestionBtn">Next Question <i class="fa-solid fa-chevron-right"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: AI RESUME BUILDER -->
+      <section id="tab-builder" class="tab-page">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">AI Smart Resume Builder</h1>
+            <p class="page-subtitle">Generate tailored, ATS-ready resume layouts powered by real AI bullet point rewriting.</p>
+          </div>
+          <button class="btn btn-primary" onclick="window.print()">
+            <i class="fa-solid fa-download"></i> Print / Save PDF
+          </button>
+        </div>
+
+        <div class="builder-layout">
+          <div class="card glass-card builder-form">
+            <h3><i class="fa-solid fa-pen-to-square"></i> Resume Content Generator</h3>
+            
+            <div class="form-group mt-3">
+              <label>Target Job Title</label>
+              <input type="text" class="form-control" value="Senior Full Stack Software Engineer" id="bRoleInput">
+            </div>
+
+            <div class="form-group mt-3">
+              <label>Professional Summary</label>
+              <div class="input-with-ai">
+                <textarea class="form-textarea" rows="3" id="bSummaryInput">Results-driven Full Stack Engineer with 4+ years of experience engineering high-throughput web applications, Node.js microservices, and React frontends.</textarea>
+                <button class="btn-ai-sparkle" title="AI Enhance Summary" id="btnAiEnhanceSummary" onclick="enhanceSummaryWithAI()"><i class="fa-solid fa-wand-magic-sparkles"></i> Real AI Enhance</button>
+              </div>
+            </div>
+
+            <div class="form-group mt-3">
+              <label>Top Skills (Comma Separated)</label>
+              <input type="text" class="form-control" value="JavaScript, TypeScript, React.js, Node.js, Express, PostgreSQL, Docker, AWS, Git" id="bSkillsInput">
+            </div>
+          </div>
+
+          <div class="resume-preview-sheet">
+            <div class="resume-document" id="resumePreviewDoc">
+              <div class="res-header">
+                <h1 id="pvName">ARCHIT PRAJAPATI</h1>
+                <p class="res-title" id="pvTitle">SENIOR FULL STACK SOFTWARE ENGINEER</p>
+                <div class="res-contact">
+                  <span><i class="fa-solid fa-envelope"></i> archit@example.com</span> |
+                  <span><i class="fa-solid fa-phone"></i> +91 98765 43210</span> |
+                  <span><i class="fa-brands fa-linkedin"></i> linkedin.com/in/archit</span> |
+                  <span><i class="fa-solid fa-location-dot"></i> India</span>
+                </div>
+              </div>
+
+              <div class="res-section">
+                <h2>PROFESSIONAL SUMMARY</h2>
+                <div class="res-divider"></div>
+                <p id="pvSummary">Results-driven Full Stack Engineer with 4+ years of experience engineering high-throughput web applications, Node.js microservices, and React frontends. Specialized in API optimization, clean architecture, and CI/CD pipelines.</p>
+              </div>
+
+              <div class="res-section mt-3">
+                <h2>TECHNICAL SKILLS</h2>
+                <div class="res-divider"></div>
+                <p id="pvSkills"><strong>Languages & Frameworks:</strong> JavaScript (ES6+), TypeScript, React.js, Node.js, Express, Next.js, HTML5/CSS3<br>
+                <strong>Databases & Cloud:</strong> PostgreSQL, MongoDB, Redis, Docker, AWS (S3, EC2), Git</p>
+              </div>
+
+              <div class="res-section mt-3">
+                <h2>WORK EXPERIENCE</h2>
+                <div class="res-divider"></div>
+                <div class="exp-item">
+                  <div class="exp-header">
+                    <strong>Senior Full Stack Developer — TechNova Solutions</strong>
+                    <span>2024 – Present</span>
+                  </div>
+                  <ul>
+                    <li>Architected scalable RESTful microservices using Node.js & Express, reducing API response times by 38% for over 100k daily users.</li>
+                    <li>Engineered 25+ reusable modular UI components using React.js and TypeScript, accelerating frontend dev velocity by 30%.</li>
+                    <li>Streamlined deployment pipelines using Docker and GitHub Actions, cutting staging setup time by 45%.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="res-section mt-3">
+                <h2>EDUCATION</h2>
+                <div class="res-divider"></div>
+                <div class="exp-header">
+                  <strong>B.Tech in Computer Science & Engineering</strong>
+                  <span>2020 – 2024</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Real AI API Settings modal removed (configured securely on backend) -->
+
+  <script src="app.js"></script>
+</body>
+</html>
