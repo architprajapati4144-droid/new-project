@@ -628,10 +628,14 @@ function logoutUser() {
 function saveUserAuditRecord(fileName, role, score) {
   if (!currentUser || currentUser.email === 'guest@example.com') return;
 
+  const safeFileName = (typeof fileName === 'string' && fileName.trim()) ? fileName.trim() : 'My_Resume.pdf';
+  const safeRole = (typeof role === 'string' && role.trim()) ? role.trim() : 'Software Engineer';
+  const safeScore = (typeof score === 'number' && !isNaN(score)) ? score : (parseFloat(score) || 85);
+
   const newRecord = {
-    name: fileName,
-    role: role,
-    score: score,
+    name: safeFileName,
+    role: safeRole,
+    score: safeScore,
     time: 'Just now'
   };
 
@@ -645,16 +649,20 @@ function saveUserAuditRecord(fileName, role, score) {
     renderUserAudits();
   }
 
-  // Save to Browser IndexedDB
+  // Save to Browser IndexedDB safely
   if (dbInstance) {
-    const tx = dbInstance.transaction('resumes', 'readwrite');
-    tx.objectStore('resumes').add({
-      user_email: currentUser.email,
-      filename: fileName,
-      role: role,
-      score: score,
-      created_at: new Date().toISOString()
-    });
+    try {
+      const tx = dbInstance.transaction('resumes', 'readwrite');
+      tx.objectStore('resumes').add({
+        user_email: String(currentUser.email),
+        filename: String(safeFileName),
+        role: String(safeRole),
+        score: safeScore,
+        created_at: new Date().toISOString()
+      });
+    } catch (idbErr) {
+      console.warn('IndexedDB save resume non-fatal notice:', idbErr);
+    }
   }
 
   // Sync to Python SQLite DB if server is active
@@ -664,10 +672,10 @@ function saveUserAuditRecord(fileName, role, score) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         user_id: currentUser.id,
-        filename: fileName,
+        filename: String(safeFileName),
         raw_text: "Sample text",
-        ats_score: score,
-        target_role: role
+        ats_score: Math.round(safeScore),
+        target_role: String(safeRole)
       })
     }).catch(e => console.warn('SQLite Sync error:', e));
   }
@@ -694,16 +702,20 @@ function saveUserJdMatchRecord(jobTitle, matchPercentage, matchSummary, gapMatri
     localStorage.setItem('RESUMIND_USERS', JSON.stringify(usersDb));
   }
 
-  // Save to IndexedDB
+  // Save to IndexedDB safely
   if (dbInstance) {
-    const tx = dbInstance.transaction('jd_matches', 'readwrite');
-    tx.objectStore('jd_matches').add({
-      user_email: currentUser.email,
-      job_title: jobTitle,
-      match_percentage: matchPercentage,
-      match_summary: matchSummary,
-      created_at: new Date().toISOString()
-    });
+    try {
+      const tx = dbInstance.transaction('jd_matches', 'readwrite');
+      tx.objectStore('jd_matches').add({
+        user_email: String(currentUser.email),
+        job_title: String(jobTitle || 'Target Position'),
+        match_percentage: Number(matchPercentage) || 0,
+        match_summary: String(matchSummary || ''),
+        created_at: new Date().toISOString()
+      });
+    } catch (idbErr) {
+      console.warn('IndexedDB jd_matches save notice:', idbErr);
+    }
   }
 
   // Sync to Python SQLite DB
@@ -746,17 +758,21 @@ function saveUserInterviewRecord(roleFocus, roundType, difficulty, overallScore)
     localStorage.setItem('RESUMIND_USERS', JSON.stringify(usersDb));
   }
 
-  // Save to IndexedDB
+  // Save to IndexedDB safely
   if (dbInstance) {
-    const tx = dbInstance.transaction('interviews', 'readwrite');
-    tx.objectStore('interviews').add({
-      user_email: currentUser.email,
-      role_focus: roleFocus,
-      round_type: roundType,
-      difficulty: difficulty,
-      overall_score: overallScore,
-      created_at: new Date().toISOString()
-    });
+    try {
+      const tx = dbInstance.transaction('interviews', 'readwrite');
+      tx.objectStore('interviews').add({
+        user_email: String(currentUser.email),
+        role_focus: String(roleFocus || 'Full Stack Developer'),
+        round_type: String(roundType || 'Technical'),
+        difficulty: String(difficulty || 'Mid-Level'),
+        overall_score: String(overallScore || '8.5/10'),
+        created_at: new Date().toISOString()
+      });
+    } catch (idbErr) {
+      console.warn('IndexedDB interviews save notice:', idbErr);
+    }
   }
 
   // Sync to Python SQLite DB
@@ -852,7 +868,7 @@ function initAnalyzerTabs() {
 
   const analyzeBtn = document.getElementById('analyzeResumeBtn');
   if (analyzeBtn) {
-    analyzeBtn.addEventListener('click', runResumeAnalysis);
+    analyzeBtn.addEventListener('click', () => runResumeAnalysis());
   }
 }
 
@@ -1145,7 +1161,9 @@ Experience:
 }
 
 async function runResumeAnalysis(fileName) {
-  const resumeFileToUse = fileName || currentUploadedFileName || 'My_Resume.pdf';
+  const resumeFileToUse = (typeof fileName === 'string' && fileName.trim()) 
+    ? fileName.trim() 
+    : (currentUploadedFileName || 'My_Resume.pdf');
   const text = currentExtractedResumeText.trim();
 
   if (!text) {
