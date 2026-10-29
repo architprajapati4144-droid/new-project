@@ -1170,16 +1170,20 @@ async function runResumeAnalysis(fileName) {
   const resultsCard = document.getElementById('analysisResults');
   if (resultsCard) resultsCard.scrollIntoView({ behavior: 'smooth' });
 
-  if (!isBackendOnline) {
-    simulateResumeAnalysis(resumeFileToUse, 88);
-    saveUserAuditRecord(resumeFileToUse, currentUser ? currentUser.role : 'Software Engineer', 88);
-    return;
-  }
-
   const analyzeBtn = document.getElementById('analyzeResumeBtn');
   if (analyzeBtn) {
     analyzeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> AI Auditing Resume...';
     analyzeBtn.disabled = true;
+  }
+
+  if (!isBackendOnline) {
+    const localData = analyzeResumeLocally(text, resumeFileToUse);
+    renderResumeAuditReport(localData, resumeFileToUse);
+    if (analyzeBtn) {
+      analyzeBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Re-Analyze Resume with AI';
+      analyzeBtn.disabled = false;
+    }
+    return;
   }
 
   try {
@@ -1188,7 +1192,7 @@ async function runResumeAnalysis(fileName) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         resume_text: text,
-        target_role: currentUser ? currentUser.role : 'Software Engineer',
+        target_role: currentUser ? currentUser.role : '',
         experience_level: currentUser ? (currentUser.experience_level || 'Mid-Level (2-5 yrs)') : 'Mid-Level (2-5 yrs)',
         target_skills: currentUser ? (currentUser.target_skills || '') : ''
       })
@@ -1200,25 +1204,74 @@ async function runResumeAnalysis(fileName) {
     }
 
     const data = await res.json();
-    const score = data.ats_score || 88;
-    document.getElementById('resumeRoleTag').innerText = `Target: ${data.target_role || 'Candidate'}`;
-    document.getElementById('scoreValue').innerText = (score / 10).toFixed(1);
-    
-    const dashoffset = 264 - (264 * score / 100);
-    document.getElementById('scoreCircleProgress').style.strokeDashoffset = dashoffset;
-    
-    document.getElementById('scoreHeadline').innerText = data.headline || 'AI Audit Completed!';
-    document.getElementById('scoreSubhead').innerText = data.subhead || '';
+    renderResumeAuditReport(data, resumeFileToUse);
 
-    const detectedContainer = document.getElementById('detectedSkills');
-    detectedContainer.innerHTML = (data.detected_skills || []).map(s => `<span class="pill pill-green">${s}</span>`).join('');
+  } catch (err) {
+    console.warn("AI endpoint notice, engaging accurate local audit:", err);
+    const localData = analyzeResumeLocally(text, resumeFileToUse);
+    renderResumeAuditReport(localData, resumeFileToUse);
+  } finally {
+    if (analyzeBtn) {
+      analyzeBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Re-Analyze Resume with AI';
+      analyzeBtn.disabled = false;
+    }
+  }
+}
 
-    const missingContainer = document.getElementById('missingSkills');
-    missingContainer.innerHTML = (data.missing_keywords || []).map(s => `<span class="pill pill-red">+ ${s}</span>`).join('');
+function renderResumeAuditReport(data, resumeFileToUse) {
+  const score = Math.round(Number(data.ats_score) || 72);
+  
+  const roleTag = document.getElementById('resumeRoleTag');
+  if (roleTag) roleTag.innerText = `Target: ${data.target_role || 'Candidate'}`;
+  
+  const scoreVal = document.getElementById('scoreValue');
+  if (scoreVal) scoreVal.innerText = score;
+  
+  const dashoffset = 264 - (264 * Math.min(100, Math.max(0, score)) / 100);
+  const circleEl = document.getElementById('scoreCircleProgress');
+  if (circleEl) circleEl.style.strokeDashoffset = dashoffset;
+  
+  const headlineEl = document.getElementById('scoreHeadline');
+  if (headlineEl) headlineEl.innerText = data.headline || (score >= 80 ? 'Strong ATS Compatibility!' : score >= 65 ? 'Solid Foundation - Ready for Optimization' : 'Needs Optimization');
+  
+  const subheadEl = document.getElementById('scoreSubhead');
+  if (subheadEl) subheadEl.innerText = data.subhead || 'Evaluation based on keyword density, structure, and measurable bullet impact.';
 
-    const atsList = document.getElementById('atsCheckList');
+  const tagsBox = document.getElementById('scoreTagsBox');
+  if (tagsBox) {
+    if (data.score_tags && data.score_tags.length > 0) {
+      tagsBox.innerHTML = data.score_tags.map(t => `
+        <span class="tag tag-${t.type || 'pass'}">
+          <i class="fa-solid fa-${t.type === 'pass' ? 'check' : t.type === 'fail' ? 'xmark' : 'triangle-exclamation'}"></i> ${t.label}
+        </span>
+      `).join('');
+    } else {
+      tagsBox.innerHTML = `
+        <span class="tag ${score >= 70 ? 'tag-pass' : 'tag-warn'}"><i class="fa-solid fa-${score >= 70 ? 'check' : 'triangle-exclamation'}"></i> ${score >= 70 ? 'Good Keyword Density' : 'Add Core Keywords'}</span>
+        <span class="tag tag-pass"><i class="fa-solid fa-check"></i> Standard Formatting</span>
+        <span class="tag ${score >= 75 ? 'tag-pass' : 'tag-warn'}"><i class="fa-solid fa-${score >= 75 ? 'check' : 'triangle-exclamation'}"></i> ${score >= 75 ? 'Measurable Impact' : 'Quantify Bullets'}</span>
+      `;
+    }
+  }
+
+  const detectedContainer = document.getElementById('detectedSkills');
+  if (detectedContainer) {
+    detectedContainer.innerHTML = (data.detected_skills && data.detected_skills.length > 0)
+      ? data.detected_skills.map(s => `<span class="pill pill-green">${s}</span>`).join('')
+      : '<span class="text-muted" style="font-size: 0.85rem;">No technical skills detected yet.</span>';
+  }
+
+  const missingContainer = document.getElementById('missingSkills');
+  if (missingContainer) {
+    missingContainer.innerHTML = (data.missing_keywords && data.missing_keywords.length > 0)
+      ? data.missing_keywords.map(s => `<span class="pill pill-red">+ ${s}</span>`).join('')
+      : '<span class="pill pill-green"><i class="fa-solid fa-check"></i> Good keyword alignment!</span>';
+  }
+
+  const atsList = document.getElementById('atsCheckList');
+  if (atsList) {
     atsList.innerHTML = (data.check_items || []).map(item => `
-      <div class="check-item status-${item.type}">
+      <div class="check-item status-${item.type || 'pass'}">
         <i class="fa-solid fa-${item.type === 'pass' ? 'circle-check' : item.type === 'warn' ? 'circle-exclamation' : 'circle-xmark'}"></i>
         <div class="check-details">
           <strong>${item.title}</strong>
@@ -1226,8 +1279,10 @@ async function runResumeAnalysis(fileName) {
         </div>
       </div>
     `).join('');
+  }
 
-    const bulletContainer = document.getElementById('bulletEnhanceContainer');
+  const bulletContainer = document.getElementById('bulletEnhanceContainer');
+  if (bulletContainer) {
     bulletContainer.innerHTML = (data.bullet_enhancements || []).map(b => `
       <div class="bullet-rewrite-card mb-3">
         <div class="original-bullet">
@@ -1241,27 +1296,146 @@ async function runResumeAnalysis(fileName) {
         </div>
       </div>
     `).join('');
-
-    saveUserAuditRecord(resumeFileToUse, data.target_role || 'Software Engineer', score);
-
-  } catch (err) {
-    alert(`Real AI Analysis Error: ${err.message}. Falling back to Sandbox Mode.`);
-    simulateResumeAnalysis(resumeFileToUse, 88);
-    saveUserAuditRecord(resumeFileToUse, 'Software Engineer', 88);
-  } finally {
-    if (analyzeBtn) {
-      analyzeBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Re-Analyze Resume with AI';
-      analyzeBtn.disabled = false;
-    }
   }
+
+  saveUserAuditRecord(resumeFileToUse, data.target_role || (currentUser ? currentUser.role : 'Candidate'), score);
 }
 
-function simulateResumeAnalysis(fileName, score) {
-  document.getElementById('resumeRoleTag').innerText = `Target: Senior Software Engineer`;
-  document.getElementById('scoreValue').innerText = (score / 10).toFixed(1);
-  document.getElementById('scoreCircleProgress').style.strokeDashoffset = '32';
-  document.getElementById('scoreHeadline').innerText = 'Top Tier Resume!';
-  document.getElementById('scoreSubhead').innerText = 'Outstanding ATS formatting, contact links, and tech keyword density.';
+function analyzeResumeLocally(resumeText, fileName) {
+  const text = (resumeText || "").trim();
+  const words = text.split(/\s+/).filter(Boolean);
+  const wordCount = words.length;
+  const textLower = text.toLowerCase();
+
+  // 1. Contact Info
+  const hasEmail = /[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+/.test(text);
+  const hasPhone = /(?:\+?\d{1,3}[ -]?)?\(?\d{3,5}\)?[ -]?\d{3,5}[ -]?\d{3,5}/.test(text);
+  const hasLinkedIn = textLower.includes('linkedin.com');
+  const hasGithub = textLower.includes('github.com') || textLower.includes('portfolio') || textLower.includes('http');
+
+  let contactScore = 0;
+  if (hasEmail) contactScore += 4;
+  if (hasPhone) contactScore += 4;
+  if (hasLinkedIn) contactScore += 4;
+  if (hasGithub) contactScore += 3;
+
+  // 2. Section Headings
+  const sectionChecks = [
+    { name: "Summary / Objective", match: /summary|objective|profile|about me/i.test(text) },
+    { name: "Education", match: /education|academic|university|college|diploma|degree/i.test(text) },
+    { name: "Experience / Projects", match: /experience|employment|work history|projects|project/i.test(text) },
+    { name: "Technical Skills", match: /skills|technical skills|technologies|competencies/i.test(text) },
+    { name: "Certifications / Awards", match: /certificat|award|achievement|license|coursework/i.test(text) }
+  ];
+  const foundSections = sectionChecks.filter(s => s.match);
+  const sectionScore = Math.min(20, foundSections.length * 4);
+
+  // 3. Verbs & Measurable Metrics
+  const actionVerbsList = [
+    "built", "developed", "designed", "engineered", "implemented", "created",
+    "led", "managed", "optimized", "architected", "deployed", "collaborated",
+    "tested", "analyzed", "maintained", "improved", "automated", "spearheaded",
+    "integrated", "delivered", "executed", "configured", "accelerated", "reduced", "increased"
+  ];
+  const foundVerbs = actionVerbsList.filter(v => new RegExp('\\b' + v + '\\b', 'i').test(text));
+  const metricsFound = text.match(/(\b\d+%\b|\$\d+|\b\d+\+\b|\b\d+\s*(?:users|clients|ms|seconds|hours|x|times)\b)/gi) || [];
+  const verbMetricScore = Math.min(15, foundVerbs.length * 2) + Math.min(10, metricsFound.length * 3);
+
+  // 4. Skills Dictionary
+  const SKILL_DICT = [
+    "Python", "JavaScript", "TypeScript", "Java", "C++", "C", "C#", "Go", "Rust", "PHP", "Ruby", "Swift", "Kotlin",
+    "HTML5", "HTML", "CSS3", "CSS", "Tailwind", "Bootstrap", "React", "React.js", "Next.js", "Angular", "Vue",
+    "Node.js", "Express", "Django", "Flask", "FastAPI", "Spring Boot",
+    "SQL", "MySQL", "PostgreSQL", "MongoDB", "Redis", "SQLite", "Firebase",
+    "Docker", "Kubernetes", "AWS", "Azure", "GCP", "Linux", "Git", "GitHub", "CI/CD",
+    "REST API", "GraphQL", "Postman", "Microservices",
+    "Machine Learning", "PyTorch", "TensorFlow", "Pandas", "NumPy", "Scikit-Learn",
+    "Figma", "UI/UX", "Agile", "Scrum", "Unit Testing", "Jest"
+  ];
+  const detectedSkills = [];
+  SKILL_DICT.forEach(skill => {
+    const reg = new RegExp('\\b' + skill.replace('.', '\\.').replace('+', '\\+') + '\\b', 'i');
+    if (reg.test(text)) {
+      const base = skill.replace('.js', '').replace('5', '').replace('3', '');
+      if (!detectedSkills.some(d => d.toLowerCase() === base.toLowerCase())) {
+        detectedSkills.push(skill);
+      }
+    }
+  });
+  const skillScore = Math.min(25, detectedSkills.length * 3 + (detectedSkills.length >= 4 ? 5 : 0));
+
+  // 5. Length & Readability
+  let lengthScore = 15;
+  if (wordCount < 100) lengthScore = 4;
+  else if (wordCount < 200) lengthScore = 8;
+  else if (wordCount > 1200) lengthScore = 12;
+
+  let totalScore = contactScore + sectionScore + verbMetricScore + skillScore + lengthScore;
+  totalScore = Math.max(35, Math.min(95, totalScore));
+
+  // Determine role
+  let detectedRole = currentUser ? currentUser.role : "Software Developer";
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  for (let i = 0; i < Math.min(5, lines.length); i++) {
+    const l = lines[i];
+    if (/developer|engineer|designer|scientist|analyst|student|diploma|intern|manager/i.test(l)) {
+      detectedRole = l.split(/[-|]/)[0].trim();
+      break;
+    }
+  }
+
+  const commonRecs = ["REST APIs", "Unit Testing", "Docker", "CI/CD Pipelines", "Agile / Scrum", "Git & GitHub"];
+  const missingKeywords = commonRecs.filter(r => !detectedSkills.some(s => s.toLowerCase().includes(r.toLowerCase().split(' ')[0]))).slice(0, 4);
+
+  const checkItems = [];
+  if (hasEmail && hasPhone) {
+    checkItems.push({ type: "pass", title: "Contact Information", desc: "Detected active email and phone number for recruiter outreach." });
+  } else {
+    checkItems.push({ type: "warn", title: "Incomplete Contact Info", desc: "Ensure your email, phone, and professional LinkedIn/portfolio links are at the top." });
+  }
+
+  if (foundSections.length >= 3) {
+    checkItems.push({ type: "pass", title: "Standard ATS Sections", desc: `Detected ${foundSections.length} core sections (${foundSections.map(s => s.name).slice(0, 3).join(', ')}).` });
+  } else {
+    checkItems.push({ type: "warn", title: "Missing Core Headings", desc: "Organize into distinct standard sections: Summary, Experience, Education, and Technical Skills." });
+  }
+
+  if (metricsFound.length >= 2) {
+    checkItems.push({ type: "pass", title: "Quantifiable Metrics", desc: `Found ${metricsFound.length} measurable achievements with numbers and percentages.` });
+  } else {
+    checkItems.push({ type: "warn", title: "Quantified Impact", desc: "Add measurable numbers (percentages, latency saved, user volume) to your project bullet points." });
+  }
+
+  if (foundVerbs.length >= 4) {
+    checkItems.push({ type: "pass", title: "Action Verbs", desc: `Found strong action verbs (${foundVerbs.slice(0, 4).join(', ')}).` });
+  } else {
+    checkItems.push({ type: "warn", title: "Weak Action Verbs", desc: "Begin project lines with strong accomplishment verbs like Engineered, Spearheaded, Optimized." });
+  }
+
+  const candidateBullets = lines.filter(l => l.length > 30 && !l.endsWith(':'));
+  const origBullet = candidateBullets.length > 0 ? candidateBullets[0].slice(0, 130) : "Developed software features using modern programming frameworks.";
+  const improvedBullet = `Architected and implemented ${detectedRole.toLowerCase()} solution, improving execution efficiency by 28% and scaling performance for over 150+ users.`;
+
+  const headline = totalScore >= 80 ? "Strong ATS Profile!" : totalScore >= 68 ? "Good Foundation - Ready for Optimization" : "Needs Structural & Keyword Optimization";
+  const subhead = `Your resume scored ${totalScore}/100 based on ${detectedSkills.length} verified technical skills and ${foundVerbs.length} impact verbs. Quantifying your accomplishments will maximize recruiter responses.`;
+
+  return {
+    target_role: detectedRole,
+    ats_score: totalScore,
+    headline,
+    subhead,
+    score_tags: [
+      { label: "Contact Details", type: (hasEmail && hasPhone) ? "pass" : "warn" },
+      { label: "Section Headers", type: foundSections.length >= 3 ? "pass" : "warn" },
+      { label: "Metrics & Scale", type: metricsFound.length >= 2 ? "pass" : "warn" }
+    ],
+    detected_skills: detectedSkills.length > 0 ? detectedSkills.slice(0, 12) : ["General Technical Skills"],
+    missing_keywords: missingKeywords.length > 0 ? missingKeywords : ["RESTful APIs", "Docker", "Unit Testing"],
+    check_items: checkItems,
+    bullet_enhancements: [
+      { original: origBullet, improved: improvedBullet }
+    ]
+  };
 }
 
 
