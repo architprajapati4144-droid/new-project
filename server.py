@@ -142,7 +142,7 @@ class AIEnhanceSummaryRequest(BaseModel):
 # GOOGLE GEMINI API CONNECTOR
 # --------------------------------------------------------------------------
 def call_gemini(prompt: str, system_instruction: str = "You are a professional recruiting assistant.") -> str:
-    """Queries Google Gemini API using native urllib library (no extra pip modules required)."""
+    """Queries Google Gemini API with automatic fallback across Gemini 3.x models."""
     api_key = os.environ.get("GEMINI_API_KEY", "").strip()
     
     # Fallback to local config file if not set in environment
@@ -152,9 +152,13 @@ def call_gemini(prompt: str, system_instruction: str = "You are a professional r
             detail="Backend GEMINI_API_KEY is not configured. Please add your key to Render Environment or .env file."
         )
 
-    # Dynamic model support (defaults to gemini-2.0-flash or custom configured model)
-    model_name = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash").strip()
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+    preferred_model = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash").strip()
+    # Try preferred model (gemini-3.8-flash), then fast fallback models
+    models_to_try = [preferred_model]
+    for alt in ["gemini-3-flash-preview", "gemini-3.5-flash"]:
+        if alt not in models_to_try:
+            models_to_try.append(alt)
+
     payload = {
         "contents": [
             {
@@ -164,26 +168,32 @@ def call_gemini(prompt: str, system_instruction: str = "You are a professional r
         ]
     }
 
-    try:
-        req = urllib.request.Request(
-            url,
-            data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
-            method="POST"
-        )
-        with urllib.request.urlopen(req, timeout=15) as response:
-            res_data = json.loads(response.read().decode("utf-8"))
-            return res_data["candidates"][0]["content"]["parts"][0]["text"]
-    except urllib.error.HTTPError as e:
-        error_msg = e.read().decode("utf-8")
+    last_error = None
+    for model_name in models_to_try:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
         try:
-            error_json = json.loads(error_msg)
-            msg = error_json.get("error", {}).get("message", "Unknown Gemini error")
-        except:
-            msg = f"HTTP Error {e.code}"
-        raise HTTPException(status_code=502, detail=f"Gemini API Gateway Error: {msg}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to communicate with AI model: {str(e)}")
+            req = urllib.request.Request(
+                url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST"
+            )
+            with urllib.request.urlopen(req, timeout=18) as response:
+                res_data = json.loads(response.read().decode("utf-8"))
+                return res_data["candidates"][0]["content"]["parts"][0]["text"]
+        except urllib.error.HTTPError as e:
+            error_msg = e.read().decode("utf-8")
+            try:
+                error_json = json.loads(error_msg)
+                last_error = error_json.get("error", {}).get("message", f"HTTP Error {e.code}")
+            except Exception:
+                last_error = f"HTTP Error {e.code}: {error_msg}"
+            continue
+        except Exception as e:
+            last_error = str(e)
+            continue
+
+    raise HTTPException(status_code=502, detail=f"Gemini API Gateway Error: {last_error}")
 
 def parse_json_response(raw_reply: str) -> dict:
     """Strips markdown block wrappers and parses JSON safely."""
