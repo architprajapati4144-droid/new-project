@@ -241,10 +241,6 @@
           <i class="fa-solid fa-file-contract"></i>
           <span>Resume Analyzer & ATS</span>
         </button>
-        <button class="nav-item" data-tab="jd-match">
-          <i class="fa-solid fa-bullseye"></i>
-          <span>JD Matcher</span>
-        </button>
         <button class="nav-item" data-tab="interview">
           <i class="fa-solid fa-headset"></i>
           <span>AI Mock Interview</span>
@@ -334,14 +330,14 @@
           </div>
 
           <div class="stat-card glass-card">
-            <div class="stat-icon emerald"><i class="fa-solid fa-list-check"></i></div>
+            <div class="stat-icon emerald"><i class="fa-solid fa-briefcase"></i></div>
             <div class="stat-details">
-              <span class="stat-label">Keyword Match Rate</span>
+              <span class="stat-label">Target Role Alignment</span>
               <div class="stat-value-group">
-                <h3 class="stat-number" id="dashMatchRate">92%</h3>
-                <span class="trend positive"><i class="fa-solid fa-shield-halved"></i> Strong</span>
+                <h3 class="stat-number" id="dashRoleLabel" style="font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 155px;">Software Dev</h3>
+                <span class="trend positive"><i class="fa-solid fa-circle-check"></i> Calibrated</span>
               </div>
-              <p class="stat-sub">Aligned with target JD</p>
+              <p class="stat-sub">Personalized AI Profile</p>
             </div>
           </div>
 
@@ -380,13 +376,13 @@
                 <div class="banner-illustration"><i class="fa-solid fa-headset"></i></div>
               </div>
 
-              <div class="banner-card gradient-blue" onclick="switchTab('jd-match')">
+              <div class="banner-card gradient-blue" onclick="switchTab('builder')">
                 <div class="banner-text">
-                  <h3>Match Against Job Post</h3>
-                  <p>Paste a job description to get instant keyword gap analysis.</p>
-                  <span class="btn-link">Run Matcher <i class="fa-solid fa-arrow-right"></i></span>
+                  <h3>AI Resume Builder</h3>
+                  <p>Generate an ATS-optimized professional resume tailored to your target position.</p>
+                  <span class="btn-link">Build Resume <i class="fa-solid fa-arrow-right"></i></span>
                 </div>
-                <div class="banner-illustration"><i class="fa-solid fa-bullseye"></i></div>
+                <div class="banner-illustration"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
               </div>
             </div>
           </div>
@@ -596,78 +592,7 @@
       </section>
 
       <!-- TAB 3: JD MATCHER -->
-      <section id="tab-jd-match" class="tab-page">
-        <div class="page-header">
-          <div>
-            <h1 class="page-title">Job Description vs Resume Matcher</h1>
-            <p class="page-subtitle">Compare your resume against a specific target job posting to uncover exact keyword gaps with AI.</p>
-          </div>
-        </div>
 
-        <div class="jd-grid">
-          <div class="card glass-card">
-            <h3><i class="fa-solid fa-file-user"></i> 1. Enter Resume Text</h3>
-            <textarea id="jdResumeTextArea" class="form-textarea" rows="5" placeholder="Paste your resume text here (or leave blank to use analyzed resume)..."></textarea>
-
-            <h3 class="mt-4"><i class="fa-solid fa-align-left"></i> 2. Paste Job Description (JD)</h3>
-            <textarea id="jdTextArea" class="form-textarea" rows="6" placeholder="Paste the target job requirements, responsibilities, and required qualifications here..."></textarea>
-            
-            <button class="btn btn-primary w-100 mt-3" id="runJdMatchBtn">
-              <i class="fa-solid fa-bolt"></i> Run AI Matcher & Skill Gap Analysis
-            </button>
-          </div>
-
-          <div class="card glass-card" id="jdMatchOutput">
-            <h3><i class="fa-solid fa-bullseye"></i> Job Match Analysis</h3>
-            
-            <div class="match-score-header">
-              <div class="match-badge">
-                <span class="match-percent" id="matchPercentVal">78%</span>
-                <span class="match-label">Match Score</span>
-              </div>
-              <div class="match-summary-text">
-                <h4 id="matchTitle">Moderate-High Alignment</h4>
-                <p id="matchDesc">You meet 8 out of 11 core requirements for this position. Adding specific missing tech terms will put your profile in the shortlisted tier.</p>
-              </div>
-            </div>
-
-            <div class="gap-matrix mt-4">
-              <h4>Skill Alignment Matrix</h4>
-              <table class="matrix-table">
-                <thead>
-                  <tr>
-                    <th>Required Skill in JD</th>
-                    <th>Status in Resume</th>
-                    <th>Recommendation</th>
-                  </tr>
-                </thead>
-                <tbody id="matrixBody">
-                  <tr>
-                    <td><strong>Node.js & Express</strong></td>
-                    <td><span class="tag tag-pass">Found</span></td>
-                    <td>Keep in top skills section</td>
-                  </tr>
-                  <tr>
-                    <td><strong>React.js & State Mgmt</strong></td>
-                    <td><span class="tag tag-pass">Found</span></td>
-                    <td>Highlight Redux / Context API</td>
-                  </tr>
-                  <tr>
-                    <td><strong>Kubernetes / Helm</strong></td>
-                    <td><span class="tag tag-fail">Missing</span></td>
-                    <td>Add under DevOps / Deployment tools</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <div class="ai-tip-box mt-4">
-              <i class="fa-solid fa-lightbulb"></i>
-              <p id="jdMatchProTip"><strong>Pro-Tip:</strong> Tailor your resume summary by weaving key missing job posting terms into your latest project experience.</p>
-            </div>
-          </div>
-        </div>
-      </section>
 
       <!-- TAB 4: AI MOCK INTERVIEW SIMULATOR -->
       <section id="tab-interview" class="tab-page">

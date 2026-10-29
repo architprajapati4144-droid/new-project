@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initNavigation();
   initAnalyzerTabs();
   initDropZone();
-  initJdMatcher();
   initMockInterview();
   initResumeBuilder();
   initAuth();
@@ -457,15 +456,12 @@ function updateUserUI() {
   const atsScoreEl = document.getElementById('dashAtsScore');
   if (atsScoreEl) atsScoreEl.innerText = `${atsValOutof10}/10`;
 
-  // 2. JD Match Rate
-  let avgMatch = 0;
-  if (currentUser.jd_matches && currentUser.jd_matches.length > 0) {
-    const sum = currentUser.jd_matches.reduce((acc, m) => acc + (m.match_percentage || 0), 0);
-    avgMatch = sum / currentUser.jd_matches.length;
+  // 2. Target Role Alignment Card
+  const dashRoleLabel = document.getElementById('dashRoleLabel');
+  if (dashRoleLabel && currentUser.role) {
+    const roleParts = currentUser.role.split(' ');
+    dashRoleLabel.innerText = roleParts.slice(0, 2).join(' ');
   }
-  const matchValOutof10 = (avgMatch / 10).toFixed(1);
-  const matchRateEl = document.getElementById('dashMatchRate');
-  if (matchRateEl) matchRateEl.innerText = `${matchValOutof10}/10`;
 
   // 3. Mock Interviews Count & Trend Avg Score
   const interviewCount = currentUser.interviews ? currentUser.interviews.length : 0;
@@ -1268,73 +1264,6 @@ function simulateResumeAnalysis(fileName, score) {
   document.getElementById('scoreSubhead').innerText = 'Outstanding ATS formatting, contact links, and tech keyword density.';
 }
 
-/* --------------------------------------------------------------------------
-   JOB DESCRIPTION MATCHER ENGINE WITH REAL AI
-   -------------------------------------------------------------------------- */
-function initJdMatcher() {
-  const matchBtn = document.getElementById('runJdMatchBtn');
-  if (!matchBtn) return;
-
-  matchBtn.addEventListener('click', async () => {
-    const jdResumeEl = document.getElementById('jdResumeTextArea');
-    const resumeText = (jdResumeEl ? jdResumeEl.value.trim() : '') || currentExtractedResumeText || "Software engineer experienced with JavaScript, Python, React, and databases.";
-
-    if (!jdText) {
-      alert('Please paste a job description first.');
-      return;
-    }
-
-    if (isBackendOnline) {
-      matchBtn.innerText = '⚡ Real AI Calculating Gap Analysis...';
-      matchBtn.disabled = true;
-
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/ai/jd-match`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ resume_text: resumeText, jd_text: jdText })
-        });
-
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          throw new Error(err.detail || 'Backend AI Job Match failed');
-        }
-
-        const data = await res.json();
-        const scoreOutof10 = (data.match_percentage / 10).toFixed(1);
-        document.getElementById('matchPercentVal').innerText = `${scoreOutof10}/10`;
-        document.getElementById('matchTitle').innerText = data.match_title;
-        document.getElementById('matchDesc').innerText = data.match_desc;
-        document.getElementById('jdMatchProTip').innerHTML = `<strong>Pro-Tip:</strong> ${data.pro_tip}`;
-
-        const matrixBody = document.getElementById('matrixBody');
-        matrixBody.innerHTML = (data.matrix || []).map(m => `
-          <tr>
-            <td><strong>${m.skill}</strong></td>
-            <td><span class="tag ${m.status === 'Found' ? 'tag-pass' : 'tag-fail'}">${m.status}</span></td>
-            <td>${m.rec}</td>
-          </tr>
-        `).join('');
-
-        saveUserJdMatchRecord(data.match_title || 'Target Position', data.match_percentage, data.match_desc, data.matrix);
-        document.getElementById('jdMatchOutput').scrollIntoView({ behavior: 'smooth' });
-        return;
-      } catch (err) {
-        console.warn('Real AI Matcher fallback:', err);
-      } finally {
-        matchBtn.innerText = 'Run Real AI Matcher & Skill Gap Analysis';
-        matchBtn.disabled = false;
-      }
-    }
-
-    const fallbackScore = 78;
-    const scoreOutof10 = (fallbackScore / 10).toFixed(1);
-    document.getElementById('matchPercentVal').innerText = `${scoreOutof10}/10`;
-    document.getElementById('matchTitle').innerText = 'Moderate-High Alignment';
-    saveUserJdMatchRecord('Software Developer Match', fallbackScore, 'Good overlap with core skills.', []);
-    document.getElementById('jdMatchOutput').scrollIntoView({ behavior: 'smooth' });
-  });
-}
 
 /* --------------------------------------------------------------------------
    AI MOCK INTERVIEW SIMULATOR WITH REAL AI
