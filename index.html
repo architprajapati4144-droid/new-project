@@ -150,14 +150,52 @@
               </div>
 
               <div class="form-group mt-3">
-                <label>Target Job Role</label>
+                <label><i class="fa-solid fa-briefcase"></i> Target Job Role / Desired Position</label>
                 <select id="pRegRole" class="form-select">
                   <option value="Senior Full Stack Software Engineer">Senior Full Stack Engineer</option>
-                  <option value="Backend Developer (Node/Python)">Backend Developer</option>
-                  <option value="Frontend Engineer (React/Next)">Frontend Engineer</option>
+                  <option value="Backend Developer (Node/Python/Java)">Backend Developer</option>
+                  <option value="Frontend Engineer (React/Next/Vue)">Frontend Engineer</option>
                   <option value="Data Scientist / AI Engineer">Data Scientist / AI Specialist</option>
-                  <option value="DevOps & Cloud Engineer">DevOps & Cloud Engineer</option>
+                  <option value="DevOps & Cloud Architect">DevOps & Cloud Engineer</option>
+                  <option value="Product Manager / Tech Lead">Product Manager / Tech Lead</option>
+                  <option value="QA / SDET Automation Engineer">QA / SDET Automation Engineer</option>
+                  <option value="Cybersecurity Analyst">Cybersecurity Analyst</option>
                 </select>
+              </div>
+
+              <div class="row g-2 mt-2" style="display: flex; gap: 8px;">
+                <div class="form-group" style="flex: 1;">
+                  <label><i class="fa-solid fa-layer-group"></i> Experience Level</label>
+                  <select id="pRegExpLevel" class="form-select">
+                    <option value="Fresher / Entry-Level (0-1 yrs)">Fresher / Entry (0-1 yr)</option>
+                    <option value="Junior (1-2 yrs)">Junior (1-2 yrs)</option>
+                    <option value="Mid-Level (2-5 yrs)" selected>Mid-Level (2-5 yrs)</option>
+                    <option value="Senior (5-8 yrs)">Senior (5-8 yrs)</option>
+                    <option value="Lead / Staff (8+ yrs)">Lead / Staff (8+ yrs)</option>
+                  </select>
+                </div>
+                <div class="form-group" style="flex: 1;">
+                  <label><i class="fa-solid fa-building"></i> Target Industry</label>
+                  <select id="pRegIndustry" class="form-select">
+                    <option value="Tech & Software Products" selected>Tech & Software</option>
+                    <option value="Finance & FinTech">FinTech / Banking</option>
+                    <option value="E-Commerce & Retail">E-Commerce</option>
+                    <option value="Healthcare & HealthTech">Healthcare</option>
+                    <option value="AI & Machine Learning">AI & Big Data</option>
+                    <option value="Consulting & Enterprise">Consulting / Services</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group mt-3">
+                <label><i class="fa-solid fa-bullseye"></i> Key Job Requirements & Skills Needed</label>
+                <div class="input-icon-wrapper">
+                  <i class="fa-solid fa-tags input-icon"></i>
+                  <input type="text" id="pRegSkills" class="form-control ps-icon" placeholder="e.g. React, Node.js, Python, AWS, System Design" value="React, Node.js, Python, PostgreSQL, REST APIs">
+                </div>
+                <small class="text-dim" style="font-size: 0.76rem; display: block; margin-top: 4px;">
+                  ✨ AI will calibrate ATS scoring, interview questions, and resume audits against these requirements.
+                </small>
               </div>
 
               <div class="form-group mt-3">

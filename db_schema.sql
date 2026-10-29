@@ -9,6 +9,9 @@ CREATE TABLE IF NOT EXISTS users (
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     target_role TEXT DEFAULT 'Software Engineer',
+    experience_level TEXT DEFAULT 'Mid-Level (2-4 yrs)',
+    target_industry TEXT DEFAULT 'Tech & Software Products',
+    target_skills TEXT DEFAULT '',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

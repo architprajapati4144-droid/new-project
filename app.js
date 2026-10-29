@@ -84,6 +84,9 @@ async function checkPythonBackendStatus() {
               email: profile.email,
               name: profile.name,
               role: profile.target_role,
+              experience_level: profile.experience_level || 'Mid-Level (2-5 yrs)',
+              target_industry: profile.target_industry || 'Tech & Software Products',
+              target_skills: profile.target_skills || '',
               initials: profile.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
               audits: profile.audits || [],
               jd_matches: profile.jd_matches || [],
@@ -210,7 +213,10 @@ async function handlePageRegisterSubmit(e) {
   const email = document.getElementById('pRegEmail').value.trim().toLowerCase();
   const password = document.getElementById('pRegPassword').value;
   const role = document.getElementById('pRegRole').value;
-  await registerWithCredentials(name, email, password, role);
+  const expLevel = document.getElementById('pRegExpLevel')?.value || 'Mid-Level (2-5 yrs)';
+  const industry = document.getElementById('pRegIndustry')?.value || 'Tech & Software Products';
+  const targetSkills = document.getElementById('pRegSkills')?.value.trim() || '';
+  await registerWithCredentials(name, email, password, role, expLevel, industry, targetSkills);
 }
 
 async function loginWithCredentials(email, password) {
@@ -239,6 +245,9 @@ async function loginWithCredentials(email, password) {
             email: profile.email,
             name: profile.name,
             role: profile.target_role,
+            experience_level: profile.experience_level || 'Mid-Level (2-5 yrs)',
+            target_industry: profile.target_industry || 'Tech & Software Products',
+            target_skills: profile.target_skills || '',
             initials: profile.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
             audits: profile.audits || [],
             jd_matches: profile.jd_matches || [],
@@ -250,6 +259,9 @@ async function loginWithCredentials(email, password) {
             email: data.user.email,
             name: data.user.name,
             role: data.user.target_role,
+            experience_level: data.user.experience_level || 'Mid-Level (2-5 yrs)',
+            target_industry: data.user.target_industry || 'Tech & Software Products',
+            target_skills: data.user.target_skills || '',
             initials: data.user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
             audits: [],
             jd_matches: [],
@@ -296,7 +308,7 @@ async function loginWithCredentials(email, password) {
   }
 }
 
-async function registerWithCredentials(name, email, password, role) {
+async function registerWithCredentials(name, email, password, role, experience_level = 'Mid-Level (2-5 yrs)', target_industry = 'Tech & Software Products', target_skills = '') {
   const submitBtn = document.getElementById('pRegisterSubmitBtn');
   if (submitBtn) {
     submitBtn.disabled = true;
@@ -311,7 +323,15 @@ async function registerWithCredentials(name, email, password, role) {
       const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role })
+        body: JSON.stringify({ 
+          name, 
+          email, 
+          password, 
+          role, 
+          experience_level, 
+          target_industry, 
+          target_skills 
+        })
       });
       if (res.ok) {
         const data = await res.json();
@@ -320,6 +340,9 @@ async function registerWithCredentials(name, email, password, role) {
           email: data.user.email,
           name: data.user.name,
           role: data.user.target_role,
+          experience_level: data.user.experience_level || experience_level,
+          target_industry: data.user.target_industry || target_industry,
+          target_skills: data.user.target_skills || target_skills,
           initials: initials,
           audits: [],
           jd_matches: [],
@@ -327,7 +350,7 @@ async function registerWithCredentials(name, email, password, role) {
         };
         localStorage.setItem('RESUMIND_CURRENT_USER', email);
         showAppPortal(true);
-        alert(`✨ Account created in SQLite DB! Welcome, ${name}.`);
+        alert(`✨ Account created in SQLite DB! Welcome, ${name}. AI services calibrated for ${role}.`);
         return;
       } else {
         const err = await res.json().catch(() => ({}));
@@ -345,7 +368,19 @@ async function registerWithCredentials(name, email, password, role) {
 
   // Save to Local DB & IndexedDB
   const usersDb = JSON.parse(localStorage.getItem('RESUMIND_USERS') || '{}');
-  usersDb[email] = { id: Date.now(), email, name, role, initials, audits: [], jd_matches: [], interviews: [] };
+  usersDb[email] = { 
+    id: Date.now(), 
+    email, 
+    name, 
+    role, 
+    experience_level, 
+    target_industry, 
+    target_skills, 
+    initials, 
+    audits: [], 
+    jd_matches: [], 
+    interviews: [] 
+  };
   localStorage.setItem('RESUMIND_USERS', JSON.stringify(usersDb));
   localStorage.setItem('RESUMIND_CURRENT_USER', email);
   currentUser = usersDb[email];
@@ -390,6 +425,22 @@ function updateUserUI() {
         <button class="btn-icon-xs ms-1" title="Sign Out" onclick="logoutUser()"><i class="fa-solid fa-right-from-bracket"></i></button>
       </div>
     `;
+  }
+
+  // Pre-calibrate tools to user's registered job requirements
+  const resumeRoleTag = document.getElementById('resumeRoleTag');
+  if (resumeRoleTag && currentUser.role) {
+    resumeRoleTag.innerText = `Target: ${currentUser.role} • ${currentUser.experience_level || 'Mid-Level'}`;
+  }
+
+  const bRoleInput = document.getElementById('bRoleInput');
+  if (bRoleInput && currentUser.role) {
+    bRoleInput.value = currentUser.role;
+  }
+
+  const bSkillsInput = document.getElementById('bSkillsInput');
+  if (bSkillsInput && currentUser.target_skills) {
+    bSkillsInput.value = currentUser.target_skills;
   }
 
   // --------------------------------------------------------------------------
@@ -1123,7 +1174,9 @@ async function runResumeAnalysis(fileName) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         resume_text: text,
-        target_role: currentUser ? currentUser.role : 'Software Engineer'
+        target_role: currentUser ? currentUser.role : 'Software Engineer',
+        experience_level: currentUser ? (currentUser.experience_level || 'Mid-Level (2-5 yrs)') : 'Mid-Level (2-5 yrs)',
+        target_skills: currentUser ? (currentUser.target_skills || '') : ''
       })
     });
 

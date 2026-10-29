@@ -76,7 +76,10 @@ class UserRegisterModel(BaseModel):
     name: str
     email: str
     password: str
-    role: str = "Software Engineer"
+    role: str = "Senior Full Stack Software Engineer"
+    experience_level: str = "Mid-Level (2-4 yrs)"
+    target_industry: str = "Tech & Software Products"
+    target_skills: str = ""
 
 class UserLoginModel(BaseModel):
     email: str
@@ -112,6 +115,8 @@ class InterviewSaveModel(BaseModel):
 class AIResumeAnalyzeRequest(BaseModel):
     resume_text: str
     target_role: str
+    experience_level: Optional[str] = "Mid-Level (2-4 yrs)"
+    target_skills: Optional[str] = ""
 
 class AIJdMatchRequest(BaseModel):
     resume_text: str
@@ -202,6 +207,10 @@ Resume Text:
 \"\"\"
 
 Target Job Role: {req.target_role}
+Experience Level: {req.experience_level or "Not specified"}
+Target Skills / Requirements: {req.target_skills or "Standard industry requirements"}
+
+Evaluate the resume specifically tailored to the requirements of this target job role, experience tier, and target skills.
 
 Return JSON ONLY matching this structure:
 {{
@@ -298,7 +307,10 @@ def ai_enhance_summary(req: AIEnhanceSummaryRequest):
 # --------------------------------------------------------------------------
 @app.post("/api/auth/register")
 def register_user(user: UserRegisterModel):
-    user_id = db.create_user(user.name, user.email, user.password, user.role)
+    user_id = db.create_user(
+        user.name, user.email, user.password, user.role,
+        user.experience_level, user.target_industry, user.target_skills
+    )
     if not user_id:
         raise HTTPException(status_code=400, detail="Account with this email already exists.")
     user_data = db.get_user_by_email(user.email)
