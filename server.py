@@ -60,12 +60,14 @@ def serve_js():
 
 @app.get("/api/status")
 def read_status():
-    api_key = os.environ.get("GEMINI_API_KEY", "")
+    api_key = os.environ.get("GEMINI_API_KEY", "").strip()
     has_key = len(api_key) > 0 and api_key != "YOUR_GEMINI_API_KEY_HERE"
+    model_name = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash").strip()
     return {
         "status": "online",
         "database": "SQLite (resumind.db connected)",
         "backend_ai": "Active" if has_key else "Inactive (GEMINI_API_KEY not configured)",
+        "model": model_name if has_key else "None",
         "message": "ResuMind AI Python Backend & SQLite Database Operational!"
     }
 
@@ -141,17 +143,18 @@ class AIEnhanceSummaryRequest(BaseModel):
 # --------------------------------------------------------------------------
 def call_gemini(prompt: str, system_instruction: str = "You are a professional recruiting assistant.") -> str:
     """Queries Google Gemini API using native urllib library (no extra pip modules required)."""
-    api_key = os.environ.get("GEMINI_API_KEY", "")
+    api_key = os.environ.get("GEMINI_API_KEY", "").strip()
     
     # Fallback to local config file if not set in environment
     if not api_key or api_key == "YOUR_GEMINI_API_KEY_HERE":
         raise HTTPException(
             status_code=500, 
-            detail="Backend GEMINI_API_KEY is not configured. Please add your key to the '.env' file."
+            detail="Backend GEMINI_API_KEY is not configured. Please add your key to Render Environment or .env file."
         )
 
-    # Use standard gemini-2.0-flash model
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+    # Dynamic model support (defaults to gemini-2.0-flash or custom configured model)
+    model_name = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash").strip()
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
     payload = {
         "contents": [
             {
