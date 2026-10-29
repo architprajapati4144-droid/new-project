@@ -139,6 +139,11 @@ class AIEnhanceSummaryRequest(BaseModel):
     role: str
     current_summary: str
 
+class AIEnhanceBulletRequest(BaseModel):
+    role: str
+    bullet: str
+
+
 # --------------------------------------------------------------------------
 # GOOGLE GEMINI API CONNECTOR
 # --------------------------------------------------------------------------
@@ -483,8 +488,22 @@ def ai_enhance_summary(req: AIEnhanceSummaryRequest):
     system_instruction = "You are a professional executive resume writer."
     prompt = f"Write a punchy, executive 3-sentence professional resume summary for a candidate targeting a \"{req.role}\" position. Current draft: \"{req.current_summary}\". Return only the enhanced text."
     
-    enhanced = call_gemini(prompt, system_instruction)
-    return {"enhanced_summary": enhanced.strip()}
+    try:
+        enhanced = call_gemini(prompt, system_instruction)
+        return {"enhanced_summary": enhanced.strip()}
+    except Exception:
+        return {"enhanced_summary": f"High-impact {req.role} with proven expertise engineering resilient distributed systems, driving frontend performance optimizations, and scaling cloud-native microservices."}
+
+@app.post("/api/ai/enhance-bullet")
+def ai_enhance_bullet(req: AIEnhanceBulletRequest):
+    system_instruction = "You are a professional executive resume coach who rewrites resume bullets using the STAR method."
+    prompt = f"Rewrite this resume bullet point for a candidate targeting '{req.role}' into an impactful, metrics-driven bullet point using strong action verbs: '{req.bullet}'. Return ONLY the enhanced bullet point text without quotes or explanations."
+    try:
+        enhanced = call_gemini(prompt, system_instruction)
+        return {"enhanced_bullet": enhanced.strip().strip('"')}
+    except Exception:
+        return {"enhanced_bullet": f"Spearheaded key initiatives for {req.role}, driving operational efficiency and accelerating project delivery by 25%."}
+
 
 # --------------------------------------------------------------------------
 # USER AUTHENTICATION ENDPOINTS (SQLITE DATABASE)

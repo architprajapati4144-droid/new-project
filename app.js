@@ -432,14 +432,24 @@ function updateUserUI() {
     resumeRoleTag.innerText = `Target: ${currentUser.role} • ${currentUser.experience_level || 'Mid-Level'}`;
   }
 
-  const bRoleInput = document.getElementById('bRoleInput');
-  if (bRoleInput && currentUser.role) {
-    bRoleInput.value = currentUser.role;
+  const rbName = document.getElementById('rbFullName');
+  if (rbName && currentUser.name && (!rbName.value || rbName.value === 'Archit Prajapati')) {
+    rbName.value = currentUser.name;
   }
-
-  const bSkillsInput = document.getElementById('bSkillsInput');
-  if (bSkillsInput && currentUser.target_skills) {
-    bSkillsInput.value = currentUser.target_skills;
+  const rbTitle = document.getElementById('rbTitle');
+  if (rbTitle && currentUser.role) {
+    rbTitle.value = currentUser.role;
+  }
+  const rbEmail = document.getElementById('rbEmail');
+  if (rbEmail && currentUser.email && (!rbEmail.value || rbEmail.value === 'archit@example.com')) {
+    rbEmail.value = currentUser.email;
+  }
+  const rbSkills = document.getElementById('rbSkills');
+  if (rbSkills && currentUser.target_skills) {
+    rbSkills.value = currentUser.target_skills;
+  }
+  if (typeof updateResumePreview === 'function') {
+    updateResumePreview();
   }
 
   // --------------------------------------------------------------------------
@@ -1598,60 +1608,560 @@ async function evaluateCandidateAnswerWithAI(answer) {
 /* --------------------------------------------------------------------------
    AI RESUME BUILDER ENGINE WITH REAL AI
    -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+   INTERACTIVE ATS RESUME BUILDER ENGINE
+   -------------------------------------------------------------------------- */
+let builderExperiences = [
+  {
+    id: 1,
+    title: "Senior Full Stack Developer",
+    company: "TechNova Solutions",
+    dates: "2024 – Present",
+    bullets: "Architected scalable RESTful microservices using Node.js & Express, reducing API response times by 38% for over 100k daily users.\nEngineered 25+ reusable modular UI components using React.js and TypeScript, accelerating frontend dev velocity by 30%.\nStreamlined deployment pipelines using Docker and GitHub Actions, cutting staging setup time by 45%."
+  }
+];
+
+let builderProjects = [
+  {
+    id: 1,
+    title: "Smart Resume & Career Portal (ResuMind AI)",
+    tech: "Python, FastAPI, SQLite, JavaScript, Gemini AI",
+    desc: "Engineered full-stack career platform analyzing ATS compatibility and providing real-time AI interview feedback with 99% uptime."
+  }
+];
+
+let builderEducations = [
+  {
+    id: 1,
+    degree: "B.Tech in Computer Science & Engineering",
+    school: "Gujarat Technological University",
+    dates: "2020 – 2024",
+    score: "CGPA: 8.8 / 10"
+  }
+];
+
 function initResumeBuilder() {
-  const roleInput = document.getElementById('bRoleInput');
-  const summaryInput = document.getElementById('bSummaryInput');
-  const skillsInput = document.getElementById('bSkillsInput');
+  const nameInput = document.getElementById('rbFullName');
+  if (!nameInput) return;
 
-  if (!roleInput) return;
-
-  roleInput.addEventListener('input', () => {
-    document.getElementById('pvTitle').innerText = roleInput.value.toUpperCase();
+  // Bind live listeners on all basic inputs
+  const inputs = ['rbFullName', 'rbTitle', 'rbEmail', 'rbPhone', 'rbLocation', 'rbLinkedin', 'rbWebsite', 'rbSummary', 'rbSkills', 'rbCertifications'];
+  inputs.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', updateResumePreview);
+    }
   });
 
-  summaryInput.addEventListener('input', () => {
-    document.getElementById('pvSummary').innerText = summaryInput.value;
-  });
-
-  skillsInput.addEventListener('input', () => {
-    document.getElementById('pvSkills').innerHTML = `<strong>Technical Stack:</strong> ${skillsInput.value}`;
-  });
+  renderExperienceFields();
+  renderProjectFields();
+  renderEducationFields();
+  updateResumePreview();
 }
 
-async function enhanceSummaryWithAI() {
-  const summaryInput = document.getElementById('bSummaryInput');
-  const role = document.getElementById('bRoleInput').value;
-  const btn = document.getElementById('btnAiEnhanceSummary');
+function updateResumePreview() {
+  const name = document.getElementById('rbFullName')?.value?.trim() || 'YOUR NAME';
+  const title = document.getElementById('rbTitle')?.value?.trim() || 'TARGET JOB ROLE';
+  const email = document.getElementById('rbEmail')?.value?.trim() || '';
+  const phone = document.getElementById('rbPhone')?.value?.trim() || '';
+  const loc = document.getElementById('rbLocation')?.value?.trim() || '';
+  const linkedin = document.getElementById('rbLinkedin')?.value?.trim() || '';
+  const website = document.getElementById('rbWebsite')?.value?.trim() || '';
+  const summary = document.getElementById('rbSummary')?.value?.trim() || '';
+  const skills = document.getElementById('rbSkills')?.value?.trim() || '';
+  const certs = document.getElementById('rbCertifications')?.value?.trim() || '';
 
-  if (isBackendOnline) {
-    btn.innerText = '⚡ AI Generating...';
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/ai/enhance-summary`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: role, current_summary: summaryInput.value })
-      });
+  // Header
+  const pvName = document.getElementById('pvName');
+  if (pvName) pvName.innerText = name.toUpperCase();
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || 'Backend summary enhancement failed');
-      }
+  const pvTitle = document.getElementById('pvTitle');
+  if (pvTitle) pvTitle.innerText = title.toUpperCase();
 
-      const data = await res.json();
-      summaryInput.value = data.enhanced_summary.trim();
-      document.getElementById('pvSummary').innerText = data.enhanced_summary.trim();
-      alert('✨ Real AI successfully enhanced your professional summary!');
-      return;
-    } catch (e) {
-      alert(`AI Error: ${e.message}`);
-    } finally {
-      btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Real AI Enhance';
+  // Contact items with icons and separators
+  const pvContact = document.getElementById('pvContact');
+  if (pvContact) {
+    const parts = [];
+    if (email) parts.push(`<span><i class="fa-solid fa-envelope"></i> ${email}</span>`);
+    if (phone) parts.push(`<span><i class="fa-solid fa-phone"></i> ${phone}</span>`);
+    if (loc) parts.push(`<span><i class="fa-solid fa-location-dot"></i> ${loc}</span>`);
+    if (linkedin) parts.push(`<span><i class="fa-brands fa-linkedin"></i> ${linkedin}</span>`);
+    if (website) parts.push(`<span><i class="fa-brands fa-github"></i> ${website}</span>`);
+    pvContact.innerHTML = parts.join(' <span class="sep">|</span> ');
+  }
+
+  // Summary section
+  const pvSummarySection = document.getElementById('pvSummarySection');
+  const pvSummary = document.getElementById('pvSummary');
+  if (pvSummarySection && pvSummary) {
+    if (summary) {
+      pvSummarySection.style.display = 'block';
+      pvSummary.innerText = summary;
+    } else {
+      pvSummarySection.style.display = 'none';
     }
   }
 
-  summaryInput.value = `High-impact ${role} with proven expertise engineering resilient distributed systems, driving frontend performance optimizations, and scaling cloud-native microservices.`;
-  document.getElementById('pvSummary').innerText = summaryInput.value;
-  alert('✨ Enhanced summary with AI keywords!');
+  // Skills section
+  const pvSkillsSection = document.getElementById('pvSkillsSection');
+  const pvSkills = document.getElementById('pvSkills');
+  if (pvSkillsSection && pvSkills) {
+    if (skills) {
+      pvSkillsSection.style.display = 'block';
+      pvSkills.innerText = skills;
+    } else {
+      pvSkillsSection.style.display = 'none';
+    }
+  }
+
+  // Experience section
+  const pvExpSection = document.getElementById('pvExperienceSection');
+  const pvExpList = document.getElementById('pvExperienceList');
+  if (pvExpSection && pvExpList) {
+    if (builderExperiences.length > 0) {
+      pvExpSection.style.display = 'block';
+      pvExpList.innerHTML = builderExperiences.map(exp => {
+        const bulletLines = (exp.bullets || '').split('\n').map(b => b.trim()).filter(Boolean);
+        return `
+          <div class="exp-item">
+            <div class="exp-header">
+              <strong>${exp.title || 'Position'} ${exp.company ? '— ' + exp.company : ''}</strong>
+              <span>${exp.dates || ''}</span>
+            </div>
+            ${bulletLines.length > 0 ? `<ul>${bulletLines.map(b => `<li>${b.replace(/^[•\-\*]\s*/, '')}</li>`).join('')}</ul>` : ''}
+          </div>
+        `;
+      }).join('');
+    } else {
+      pvExpSection.style.display = 'none';
+    }
+  }
+
+  // Projects section
+  const pvProjSection = document.getElementById('pvProjectsSection');
+  const pvProjList = document.getElementById('pvProjectsList');
+  if (pvProjSection && pvProjList) {
+    if (builderProjects.length > 0) {
+      pvProjSection.style.display = 'block';
+      pvProjList.innerHTML = builderProjects.map(proj => `
+        <div class="project-item">
+          <div class="project-header">
+            <strong>${proj.title || 'Project Name'}</strong>
+            <span class="project-tech">${proj.tech || ''}</span>
+          </div>
+          ${proj.desc ? `<p class="project-desc">${proj.desc}</p>` : ''}
+        </div>
+      `).join('');
+    } else {
+      pvProjSection.style.display = 'none';
+    }
+  }
+
+  // Education section
+  const pvEduSection = document.getElementById('pvEducationSection');
+  const pvEduList = document.getElementById('pvEducationList');
+  if (pvEduSection && pvEduList) {
+    if (builderEducations.length > 0) {
+      pvEduSection.style.display = 'block';
+      pvEduList.innerHTML = builderEducations.map(edu => `
+        <div class="edu-item">
+          <div class="edu-header">
+            <strong>${edu.degree || 'Degree'} ${edu.score ? `(${edu.score})` : ''}</strong>
+            <span>${edu.dates || ''}</span>
+          </div>
+          <div class="edu-school">${edu.school || ''}</div>
+        </div>
+      `).join('');
+    } else {
+      pvEduSection.style.display = 'none';
+    }
+  }
+
+  // Certifications section
+  const pvCertSection = document.getElementById('pvCertSection');
+  const pvCerts = document.getElementById('pvCertifications');
+  if (pvCertSection && pvCerts) {
+    if (certs) {
+      pvCertSection.style.display = 'block';
+      pvCerts.innerText = certs;
+    } else {
+      pvCertSection.style.display = 'none';
+    }
+  }
+}
+
+// Experience Field Management
+function renderExperienceFields() {
+  const container = document.getElementById('experienceFieldsContainer');
+  if (!container) return;
+
+  container.innerHTML = builderExperiences.map((exp) => `
+    <div class="builder-item-card" data-exp-id="${exp.id}">
+      <button type="button" class="btn-remove-item" onclick="removeExperienceField(${exp.id})" title="Delete Experience">
+        <i class="fa-solid fa-trash-can"></i>
+      </button>
+      <div class="form-row">
+        <div class="form-group flex-1">
+          <label>Job Title</label>
+          <input type="text" class="form-control form-control-sm" value="${exp.title}" placeholder="e.g. Software Engineer" oninput="updateExperienceItem(${exp.id}, 'title', this.value)">
+        </div>
+        <div class="form-group flex-1">
+          <label>Company / Organization</label>
+          <input type="text" class="form-control form-control-sm" value="${exp.company}" placeholder="e.g. Google / TechCorp" oninput="updateExperienceItem(${exp.id}, 'company', this.value)">
+        </div>
+      </div>
+      <div class="form-group mt-2">
+        <label>Dates / Period</label>
+        <input type="text" class="form-control form-control-sm" value="${exp.dates}" placeholder="e.g. 2023 – Present" oninput="updateExperienceItem(${exp.id}, 'dates', this.value)">
+      </div>
+      <div class="form-group mt-2">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <label>Key Responsibilities & Achievements (1 per line)</label>
+          <button type="button" class="btn btn-outline btn-xs" onclick="enhanceExpBulletWithAI(${exp.id}, this)">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> AI Enhance
+          </button>
+        </div>
+        <textarea class="form-textarea form-textarea-sm" rows="3" placeholder="Enter bullet points (start each achievement with an action verb)..." oninput="updateExperienceItem(${exp.id}, 'bullets', this.value)">${exp.bullets}</textarea>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addExperienceField() {
+  builderExperiences.push({
+    id: Date.now(),
+    title: "",
+    company: "",
+    dates: "",
+    bullets: ""
+  });
+  renderExperienceFields();
+  updateResumePreview();
+}
+
+function removeExperienceField(id) {
+  builderExperiences = builderExperiences.filter(e => e.id !== id);
+  renderExperienceFields();
+  updateResumePreview();
+}
+
+function updateExperienceItem(id, field, value) {
+  const item = builderExperiences.find(e => e.id === id);
+  if (item) {
+    item[field] = value;
+    updateResumePreview();
+  }
+}
+
+// Project Field Management
+function renderProjectFields() {
+  const container = document.getElementById('projectFieldsContainer');
+  if (!container) return;
+
+  container.innerHTML = builderProjects.map((proj) => `
+    <div class="builder-item-card" data-proj-id="${proj.id}">
+      <button type="button" class="btn-remove-item" onclick="removeProjectField(${proj.id})" title="Delete Project">
+        <i class="fa-solid fa-trash-can"></i>
+      </button>
+      <div class="form-row">
+        <div class="form-group flex-1">
+          <label>Project Title</label>
+          <input type="text" class="form-control form-control-sm" value="${proj.title}" placeholder="e.g. E-Commerce Platform" oninput="updateProjectItem(${proj.id}, 'title', this.value)">
+        </div>
+        <div class="form-group flex-1">
+          <label>Tech Stack / Technologies</label>
+          <input type="text" class="form-control form-control-sm" value="${proj.tech}" placeholder="e.g. React, Node.js, MongoDB" oninput="updateProjectItem(${proj.id}, 'tech', this.value)">
+        </div>
+      </div>
+      <div class="form-group mt-2">
+        <label>Project Description / Measurable Results</label>
+        <textarea class="form-textarea form-textarea-sm" rows="2" placeholder="Briefly describe what you built and the impact it achieved..." oninput="updateProjectItem(${proj.id}, 'desc', this.value)">${proj.desc}</textarea>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addProjectField() {
+  builderProjects.push({
+    id: Date.now(),
+    title: "",
+    tech: "",
+    desc: ""
+  });
+  renderProjectFields();
+  updateResumePreview();
+}
+
+function removeProjectField(id) {
+  builderProjects = builderProjects.filter(p => p.id !== id);
+  renderProjectFields();
+  updateResumePreview();
+}
+
+function updateProjectItem(id, field, value) {
+  const item = builderProjects.find(p => p.id === id);
+  if (item) {
+    item[field] = value;
+    updateResumePreview();
+  }
+}
+
+// Education Field Management
+function renderEducationFields() {
+  const container = document.getElementById('educationFieldsContainer');
+  if (!container) return;
+
+  container.innerHTML = builderEducations.map((edu) => `
+    <div class="builder-item-card" data-edu-id="${edu.id}">
+      <button type="button" class="btn-remove-item" onclick="removeEducationField(${edu.id})" title="Delete Education">
+        <i class="fa-solid fa-trash-can"></i>
+      </button>
+      <div class="form-row">
+        <div class="form-group flex-1">
+          <label>Degree / Course</label>
+          <input type="text" class="form-control form-control-sm" value="${edu.degree}" placeholder="e.g. B.Tech / Diploma in CE" oninput="updateEducationItem(${edu.id}, 'degree', this.value)">
+        </div>
+        <div class="form-group flex-1">
+          <label>School / University</label>
+          <input type="text" class="form-control form-control-sm" value="${edu.school}" placeholder="e.g. Gujarat Technological University" oninput="updateEducationItem(${edu.id}, 'school', this.value)">
+        </div>
+      </div>
+      <div class="form-row mt-2">
+        <div class="form-group flex-1">
+          <label>Dates / Year</label>
+          <input type="text" class="form-control form-control-sm" value="${edu.dates}" placeholder="e.g. 2020 – 2024" oninput="updateEducationItem(${edu.id}, 'dates', this.value)">
+        </div>
+        <div class="form-group flex-1">
+          <label>Score / CGPA (Optional)</label>
+          <input type="text" class="form-control form-control-sm" value="${edu.score}" placeholder="e.g. CGPA: 8.5 / 10" oninput="updateEducationItem(${edu.id}, 'score', this.value)">
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addEducationField() {
+  builderEducations.push({
+    id: Date.now(),
+    degree: "",
+    school: "",
+    dates: "",
+    score: ""
+  });
+  renderEducationFields();
+  updateResumePreview();
+}
+
+function removeEducationField(id) {
+  builderEducations = builderEducations.filter(e => e.id !== id);
+  renderEducationFields();
+  updateResumePreview();
+}
+
+function updateEducationItem(id, field, value) {
+  const item = builderEducations.find(e => e.id === id);
+  if (item) {
+    item[field] = value;
+    updateResumePreview();
+  }
+}
+
+// Prefill & Clear utilities
+function loadSampleResumeData() {
+  document.getElementById('rbFullName').value = (currentUser && currentUser.name) ? currentUser.name : "Archit Prajapati";
+  document.getElementById('rbTitle').value = (currentUser && currentUser.role) ? currentUser.role : "Senior Full Stack Software Engineer";
+  document.getElementById('rbEmail').value = (currentUser && currentUser.email) ? currentUser.email : "archit@example.com";
+  document.getElementById('rbPhone').value = "+91 98765 43210";
+  document.getElementById('rbLocation').value = "Ahmedabad, India";
+  document.getElementById('rbLinkedin').value = "linkedin.com/in/archit";
+  document.getElementById('rbWebsite').value = "github.com/archit";
+  document.getElementById('rbSummary').value = "Results-driven Full Stack Engineer with 4+ years of experience engineering high-throughput web applications, Node.js microservices, and React frontends. Specialized in API optimization, clean architecture, and CI/CD pipelines.";
+  document.getElementById('rbSkills').value = "JavaScript (ES6+), TypeScript, React.js, Node.js, Express, Next.js, HTML5/CSS3, PostgreSQL, MongoDB, Redis, Docker, AWS, Git";
+  document.getElementById('rbCertifications').value = "AWS Certified Cloud Practitioner (2024) | Winner of Inter-College Codeathon 2023";
+
+  builderExperiences = [
+    {
+      id: 1,
+      title: "Senior Full Stack Developer",
+      company: "TechNova Solutions",
+      dates: "2024 – Present",
+      bullets: "Architected scalable RESTful microservices using Node.js & Express, reducing API response times by 38% for over 100k daily users.\nEngineered 25+ reusable modular UI components using React.js and TypeScript, accelerating frontend dev velocity by 30%.\nStreamlined deployment pipelines using Docker and GitHub Actions, cutting staging setup time by 45%."
+    }
+  ];
+
+  builderProjects = [
+    {
+      id: 1,
+      title: "Smart Resume & Career Portal (ResuMind AI)",
+      tech: "Python, FastAPI, SQLite, JavaScript, Gemini AI",
+      desc: "Engineered full-stack career platform analyzing ATS compatibility and providing real-time AI interview feedback with 99% uptime."
+    }
+  ];
+
+  builderEducations = [
+    {
+      id: 1,
+      degree: "B.Tech in Computer Science & Engineering",
+      school: "Gujarat Technological University",
+      dates: "2020 – 2024",
+      score: "CGPA: 8.8 / 10"
+    }
+  ];
+
+  renderExperienceFields();
+  renderProjectFields();
+  renderEducationFields();
+  updateResumePreview();
+}
+
+function clearResumeForm() {
+  if (!confirm("Are you sure you want to clear all resume fields?")) return;
+  
+  const fields = ['rbFullName', 'rbTitle', 'rbEmail', 'rbPhone', 'rbLocation', 'rbLinkedin', 'rbWebsite', 'rbSummary', 'rbSkills', 'rbCertifications'];
+  fields.forEach(f => {
+    const el = document.getElementById(f);
+    if (el) el.value = '';
+  });
+
+  builderExperiences = [];
+  builderProjects = [];
+  builderEducations = [];
+
+  renderExperienceFields();
+  renderProjectFields();
+  renderEducationFields();
+  updateResumePreview();
+}
+
+// AI Enhancements
+async function enhanceSummaryWithAI() {
+  const summaryInput = document.getElementById('rbSummary');
+  const role = document.getElementById('rbTitle')?.value || "Software Engineer";
+  const btn = document.getElementById('btnAiEnhanceSummary');
+
+  if (btn) {
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enhancing...';
+    btn.disabled = true;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/ai/enhance-summary`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: role, current_summary: summaryInput.value })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.enhanced_summary) {
+        summaryInput.value = data.enhanced_summary.trim();
+        updateResumePreview();
+        return;
+      }
+    }
+  } catch (err) {
+    console.warn("AI summary fallback:", err);
+  } finally {
+    if (btn) {
+      btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Real AI Enhance';
+      btn.disabled = false;
+    }
+  }
+
+  summaryInput.value = `Results-driven ${role} with demonstrated proficiency in architecting scalable solutions, optimizing performance bottlenecks, and delivering business value through clean, maintainable engineering practices.`;
+  updateResumePreview();
+}
+
+async function enhanceExpBulletWithAI(expId, btn) {
+  const item = builderExperiences.find(e => e.id === expId);
+  if (!item || !item.bullets) return;
+
+  const originalHtml = btn.innerHTML;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> AI Polishing...';
+  btn.disabled = true;
+
+  try {
+    const role = document.getElementById('rbTitle')?.value || item.title || "Software Engineer";
+    const res = await fetch(`${API_BASE_URL}/api/ai/enhance-bullet`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: role, bullet: item.bullets.split('\n')[0] })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.enhanced_bullet) {
+        const remaining = item.bullets.split('\n').slice(1).join('\n');
+        item.bullets = data.enhanced_bullet + (remaining ? '\n' + remaining : '');
+        renderExperienceFields();
+        updateResumePreview();
+        return;
+      }
+    }
+  } catch (err) {
+    console.warn("Bullet enhancement fallback:", err);
+  } finally {
+    btn.innerHTML = originalHtml;
+    btn.disabled = false;
+  }
+
+  // Local STAR fallback
+  const improved = `Spearheaded architecture of ${item.title || 'software'} workflows, cutting processing latency by 32% and scaling reliability for 100k+ operations.`;
+  const remaining = item.bullets.split('\n').slice(1).join('\n');
+  item.bullets = improved + (remaining ? '\n' + remaining : '');
+  renderExperienceFields();
+  updateResumePreview();
+}
+
+// Clean PDF Download & Print
+function downloadResumePDF() {
+  const element = document.getElementById('resumePreviewDoc');
+  if (!element) return;
+
+  const btn = document.getElementById('btnDownloadPdf');
+  const originalText = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating PDF...';
+    btn.disabled = true;
+  }
+
+  const nameInput = document.getElementById('rbFullName');
+  const candidateName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : 'Resume';
+  const cleanFileName = `${candidateName.replace(/[^a-zA-Z0-9_-]/g, '_')}_Resume.pdf`;
+
+  if (window.html2pdf) {
+    const opt = {
+      margin:       [8, 8, 8, 8],
+      filename:     cleanFileName,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true, letterRendering: true, logging: false },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(element).save().then(() => {
+      if (btn) {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }).catch(err => {
+      console.warn("html2pdf notice, engaging print view:", err);
+      if (btn) {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+      printResumeDocument();
+    });
+  } else {
+    printResumeDocument();
+    if (btn) {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
+  }
+}
+
+function printResumeDocument() {
+  window.print();
 }
 
 function copyText(btnElement) {
@@ -1663,3 +2173,4 @@ function copyText(btnElement) {
     btnElement.innerText = originalText;
   }, 2000);
 }
+

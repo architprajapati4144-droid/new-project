@@ -13,6 +13,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <!-- Client-side High-Resolution PDF Generator -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body class="dark-theme">
 
@@ -729,85 +731,217 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">AI Smart Resume Builder</h1>
-            <p class="page-subtitle">Generate tailored, ATS-ready resume layouts powered by real AI bullet point rewriting.</p>
+            <p class="page-subtitle">Build an ATS-optimized, recruiter-ready resume with live real-time preview and AI enhancement.</p>
           </div>
-          <button class="btn btn-primary" onclick="window.print()">
-            <i class="fa-solid fa-download"></i> Print / Save PDF
-          </button>
+          <div class="header-actions-group">
+            <button class="btn btn-secondary btn-sm" onclick="loadSampleResumeData()" title="Prefill with sample profile">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Load Sample Data
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="clearResumeForm()" title="Clear all fields">
+              <i class="fa-solid fa-eraser"></i> Clear
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="printResumeDocument()" title="Open print dialog">
+              <i class="fa-solid fa-print"></i> Print
+            </button>
+            <button class="btn btn-primary btn-sm" id="btnDownloadPdf" onclick="downloadResumePDF()" title="Download clean PDF document">
+              <i class="fa-solid fa-file-pdf"></i> Download PDF
+            </button>
+          </div>
         </div>
 
         <div class="builder-layout">
-          <div class="card glass-card builder-form">
-            <h3><i class="fa-solid fa-pen-to-square"></i> Resume Content Generator</h3>
-            
-            <div class="form-group mt-3">
-              <label>Target Job Title</label>
-              <input type="text" class="form-control" value="Senior Full Stack Software Engineer" id="bRoleInput">
+          <!-- Left Column: Comprehensive Builder Form -->
+          <div class="card glass-card builder-form" id="builderFormContainer">
+            <div class="builder-form-header">
+              <h3><i class="fa-solid fa-file-pen"></i> Resume Information Form</h3>
+              <p class="text-muted" style="font-size: 0.8rem;">Fill in your details below. The preview on the right updates instantly in real time.</p>
             </div>
 
-            <div class="form-group mt-3">
-              <label>Professional Summary</label>
-              <div class="input-with-ai">
-                <textarea class="form-textarea" rows="3" id="bSummaryInput">Results-driven Full Stack Engineer with 4+ years of experience engineering high-throughput web applications, Node.js microservices, and React frontends.</textarea>
-                <button class="btn-ai-sparkle" title="AI Enhance Summary" id="btnAiEnhanceSummary" onclick="enhanceSummaryWithAI()"><i class="fa-solid fa-wand-magic-sparkles"></i> Real AI Enhance</button>
+            <!-- 1. Personal & Contact Information -->
+            <div class="builder-section-block">
+              <div class="section-title-badge">
+                <i class="fa-solid fa-user"></i> 1. Personal & Contact Details
               </div>
-            </div>
-
-            <div class="form-group mt-3">
-              <label>Top Skills (Comma Separated)</label>
-              <input type="text" class="form-control" value="JavaScript, TypeScript, React.js, Node.js, Express, PostgreSQL, Docker, AWS, Git" id="bSkillsInput">
-            </div>
-          </div>
-
-          <div class="resume-preview-sheet">
-            <div class="resume-document" id="resumePreviewDoc">
-              <div class="res-header">
-                <h1 id="pvName">ARCHIT PRAJAPATI</h1>
-                <p class="res-title" id="pvTitle">SENIOR FULL STACK SOFTWARE ENGINEER</p>
-                <div class="res-contact">
-                  <span><i class="fa-solid fa-envelope"></i> archit@example.com</span> |
-                  <span><i class="fa-solid fa-phone"></i> +91 98765 43210</span> |
-                  <span><i class="fa-brands fa-linkedin"></i> linkedin.com/in/archit</span> |
-                  <span><i class="fa-solid fa-location-dot"></i> India</span>
+              <div class="form-row">
+                <div class="form-group flex-1">
+                  <label for="rbFullName">Full Name</label>
+                  <input type="text" class="form-control" id="rbFullName" placeholder="e.g. Archit Prajapati" value="Archit Prajapati">
+                </div>
+                <div class="form-group flex-1">
+                  <label for="rbTitle">Target Role / Professional Title</label>
+                  <input type="text" class="form-control" id="rbTitle" placeholder="e.g. Senior Full Stack Software Engineer" value="Senior Full Stack Software Engineer">
                 </div>
               </div>
 
-              <div class="res-section">
+              <div class="form-row mt-2">
+                <div class="form-group flex-1">
+                  <label for="rbEmail">Email Address</label>
+                  <input type="email" class="form-control" id="rbEmail" placeholder="e.g. archit@example.com" value="archit@example.com">
+                </div>
+                <div class="form-group flex-1">
+                  <label for="rbPhone">Phone Number</label>
+                  <input type="text" class="form-control" id="rbPhone" placeholder="e.g. +91 98765 43210" value="+91 98765 43210">
+                </div>
+              </div>
+
+              <div class="form-row mt-2">
+                <div class="form-group flex-1">
+                  <label for="rbLocation">Location</label>
+                  <input type="text" class="form-control" id="rbLocation" placeholder="e.g. Ahmedabad, India" value="Ahmedabad, India">
+                </div>
+                <div class="form-group flex-1">
+                  <label for="rbLinkedin">LinkedIn URL / Handle</label>
+                  <input type="text" class="form-control" id="rbLinkedin" placeholder="e.g. linkedin.com/in/archit" value="linkedin.com/in/archit">
+                </div>
+                <div class="form-group flex-1">
+                  <label for="rbWebsite">GitHub / Portfolio Website</label>
+                  <input type="text" class="form-control" id="rbWebsite" placeholder="e.g. github.com/archit" value="github.com/archit">
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Professional Summary -->
+            <div class="builder-section-block mt-3">
+              <div class="section-title-badge">
+                <i class="fa-solid fa-align-left"></i> 2. Professional Summary
+              </div>
+              <div class="input-with-ai mt-1">
+                <textarea class="form-textarea" rows="4" id="rbSummary" placeholder="Write a brief professional summary of your background, technical focus, and accomplishments...">Results-driven Full Stack Engineer with 4+ years of experience engineering high-throughput web applications, Node.js microservices, and React frontends. Specialized in API optimization, clean architecture, and CI/CD pipelines.</textarea>
+                <button type="button" class="btn-ai-sparkle" title="AI Enhance Summary" id="btnAiEnhanceSummary" onclick="enhanceSummaryWithAI()">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i> Real AI Enhance
+                </button>
+              </div>
+            </div>
+
+            <!-- 3. Technical Skills -->
+            <div class="builder-section-block mt-3">
+              <div class="section-title-badge">
+                <i class="fa-solid fa-code"></i> 3. Technical & Core Skills
+              </div>
+              <div class="form-group mt-1">
+                <label for="rbSkills">Skills (comma separated)</label>
+                <input type="text" class="form-control" id="rbSkills" placeholder="e.g. Python, React.js, Node.js, SQL, Docker, Git" value="JavaScript (ES6+), TypeScript, React.js, Node.js, Express, Next.js, HTML5/CSS3, PostgreSQL, MongoDB, Redis, Docker, AWS, Git">
+                <small class="text-muted" style="font-size: 0.75rem;">Tip: Separate skills with commas. They will be formatted cleanly on your resume.</small>
+              </div>
+            </div>
+
+            <!-- 4. Work Experience -->
+            <div class="builder-section-block mt-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="section-title-badge">
+                  <i class="fa-solid fa-briefcase"></i> 4. Work Experience
+                </div>
+                <button type="button" class="btn btn-outline btn-xs" onclick="addExperienceField()">
+                  <i class="fa-solid fa-plus"></i> Add Experience
+                </button>
+              </div>
+              <div id="experienceFieldsContainer"></div>
+            </div>
+
+            <!-- 5. Key Projects -->
+            <div class="builder-section-block mt-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="section-title-badge">
+                  <i class="fa-solid fa-diagram-project"></i> 5. Key Projects
+                </div>
+                <button type="button" class="btn btn-outline btn-xs" onclick="addProjectField()">
+                  <i class="fa-solid fa-plus"></i> Add Project
+                </button>
+              </div>
+              <div id="projectFieldsContainer"></div>
+            </div>
+
+            <!-- 6. Education -->
+            <div class="builder-section-block mt-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="section-title-badge">
+                  <i class="fa-solid fa-graduation-cap"></i> 6. Education
+                </div>
+                <button type="button" class="btn btn-outline btn-xs" onclick="addEducationField()">
+                  <i class="fa-solid fa-plus"></i> Add Education
+                </button>
+              </div>
+              <div id="educationFieldsContainer"></div>
+            </div>
+
+            <!-- 7. Certifications & Achievements -->
+            <div class="builder-section-block mt-3">
+              <div class="section-title-badge">
+                <i class="fa-solid fa-award"></i> 7. Certifications & Honors (Optional)
+              </div>
+              <div class="form-group mt-1">
+                <textarea class="form-textarea" rows="2" id="rbCertifications" placeholder="e.g. AWS Certified Solutions Architect (2024), 1st Prize in State Level Hackathon">AWS Certified Cloud Practitioner (2024) | Winner of Inter-College Codeathon 2023</textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Live ATS-Compliant Resume Preview Document -->
+          <div class="resume-preview-sheet">
+            <div class="preview-toolbar">
+              <span class="preview-badge"><i class="fa-solid fa-eye"></i> Live ATS Document Preview</span>
+              <button class="btn btn-primary btn-xs" onclick="downloadResumePDF()">
+                <i class="fa-solid fa-download"></i> Download PDF
+              </button>
+            </div>
+            
+            <div class="resume-document" id="resumePreviewDoc">
+              <!-- Header -->
+              <div class="res-header">
+                <h1 id="pvName">ARCHIT PRAJAPATI</h1>
+                <p class="res-title" id="pvTitle">SENIOR FULL STACK SOFTWARE ENGINEER</p>
+                <div class="res-contact" id="pvContact">
+                  <span id="pvEmail"><i class="fa-solid fa-envelope"></i> archit@example.com</span>
+                  <span class="sep">|</span>
+                  <span id="pvPhone"><i class="fa-solid fa-phone"></i> +91 98765 43210</span>
+                  <span class="sep">|</span>
+                  <span id="pvLocation"><i class="fa-solid fa-location-dot"></i> Ahmedabad, India</span>
+                  <span class="sep">|</span>
+                  <span id="pvLinkedin"><i class="fa-brands fa-linkedin"></i> linkedin.com/in/archit</span>
+                  <span class="sep">|</span>
+                  <span id="pvWebsite"><i class="fa-brands fa-github"></i> github.com/archit</span>
+                </div>
+              </div>
+
+              <!-- Summary -->
+              <div class="res-section" id="pvSummarySection">
                 <h2>PROFESSIONAL SUMMARY</h2>
                 <div class="res-divider"></div>
                 <p id="pvSummary">Results-driven Full Stack Engineer with 4+ years of experience engineering high-throughput web applications, Node.js microservices, and React frontends. Specialized in API optimization, clean architecture, and CI/CD pipelines.</p>
               </div>
 
-              <div class="res-section mt-3">
+              <!-- Skills -->
+              <div class="res-section mt-3" id="pvSkillsSection">
                 <h2>TECHNICAL SKILLS</h2>
                 <div class="res-divider"></div>
-                <p id="pvSkills"><strong>Languages & Frameworks:</strong> JavaScript (ES6+), TypeScript, React.js, Node.js, Express, Next.js, HTML5/CSS3<br>
-                <strong>Databases & Cloud:</strong> PostgreSQL, MongoDB, Redis, Docker, AWS (S3, EC2), Git</p>
+                <p id="pvSkills">JavaScript (ES6+), TypeScript, React.js, Node.js, Express, Next.js, HTML5/CSS3, PostgreSQL, MongoDB, Redis, Docker, AWS, Git</p>
               </div>
 
-              <div class="res-section mt-3">
+              <!-- Experience -->
+              <div class="res-section mt-3" id="pvExperienceSection">
                 <h2>WORK EXPERIENCE</h2>
                 <div class="res-divider"></div>
-                <div class="exp-item">
-                  <div class="exp-header">
-                    <strong>Senior Full Stack Developer — TechNova Solutions</strong>
-                    <span>2024 – Present</span>
-                  </div>
-                  <ul>
-                    <li>Architected scalable RESTful microservices using Node.js & Express, reducing API response times by 38% for over 100k daily users.</li>
-                    <li>Engineered 25+ reusable modular UI components using React.js and TypeScript, accelerating frontend dev velocity by 30%.</li>
-                    <li>Streamlined deployment pipelines using Docker and GitHub Actions, cutting staging setup time by 45%.</li>
-                  </ul>
-                </div>
+                <div id="pvExperienceList"></div>
               </div>
 
-              <div class="res-section mt-3">
+              <!-- Projects -->
+              <div class="res-section mt-3" id="pvProjectsSection">
+                <h2>KEY PROJECTS</h2>
+                <div class="res-divider"></div>
+                <div id="pvProjectsList"></div>
+              </div>
+
+              <!-- Education -->
+              <div class="res-section mt-3" id="pvEducationSection">
                 <h2>EDUCATION</h2>
                 <div class="res-divider"></div>
-                <div class="exp-header">
-                  <strong>B.Tech in Computer Science & Engineering</strong>
-                  <span>2020 – 2024</span>
-                </div>
+                <div id="pvEducationList"></div>
+              </div>
+
+              <!-- Certifications -->
+              <div class="res-section mt-3" id="pvCertSection">
+                <h2>CERTIFICATIONS & HONORS</h2>
+                <div class="res-divider"></div>
+                <p id="pvCertifications">AWS Certified Cloud Practitioner (2024) | Winner of Inter-College Codeathon 2023</p>
               </div>
             </div>
           </div>
