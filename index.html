@@ -13,8 +13,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-  <!-- Client-side High-Resolution PDF Generator -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- Client-side Vector ATS PDF Generator (jsPDF) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body class="dark-theme">
 
@@ -793,24 +793,25 @@
                   <label for="rbLinkedin">LinkedIn URL / Handle</label>
                   <input type="text" class="form-control" id="rbLinkedin" placeholder="e.g. linkedin.com/in/archit" value="linkedin.com/in/archit">
                 </div>
-                <div class="form-group flex-1">
-                  <label for="rbWebsite">GitHub / Portfolio Website</label>
-                  <input type="text" class="form-control" id="rbWebsite" placeholder="e.g. github.com/archit" value="github.com/archit">
-                </div>
+              </div>
+
+              <div class="form-group mt-2">
+                <label for="rbWebsite">GitHub / Portfolio Website</label>
+                <input type="text" class="form-control" id="rbWebsite" placeholder="e.g. github.com/archit" value="github.com/archit">
               </div>
             </div>
 
             <!-- 2. Professional Summary -->
             <div class="builder-section-block mt-3">
-              <div class="section-title-badge">
-                <i class="fa-solid fa-align-left"></i> 2. Professional Summary
-              </div>
-              <div class="input-with-ai mt-1">
-                <textarea class="form-textarea" rows="4" id="rbSummary" placeholder="Write a brief professional summary of your background, technical focus, and accomplishments...">Results-driven Full Stack Engineer with 4+ years of experience engineering high-throughput web applications, Node.js microservices, and React frontends. Specialized in API optimization, clean architecture, and CI/CD pipelines.</textarea>
-                <button type="button" class="btn-ai-sparkle" title="AI Enhance Summary" id="btnAiEnhanceSummary" onclick="enhanceSummaryWithAI()">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="section-title-badge" style="margin-bottom: 0;">
+                  <i class="fa-solid fa-align-left"></i> 2. Professional Summary
+                </div>
+                <button type="button" class="btn btn-primary btn-xs" title="AI Enhance Summary" id="btnAiEnhanceSummary" onclick="enhanceSummaryWithAI()">
                   <i class="fa-solid fa-wand-magic-sparkles"></i> Real AI Enhance
                 </button>
               </div>
+              <textarea class="form-textarea" rows="4" id="rbSummary" placeholder="Write a brief professional summary of your background, technical focus, and accomplishments...">Results-driven Full Stack Engineer with 4+ years of experience engineering high-throughput web applications, Node.js microservices, and React frontends. Specialized in API optimization, clean architecture, and CI/CD pipelines.</textarea>
             </div>
 
             <!-- 3. Technical Skills -->

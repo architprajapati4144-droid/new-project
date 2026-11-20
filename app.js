@@ -433,19 +433,19 @@ function updateUserUI() {
   }
 
   const rbName = document.getElementById('rbFullName');
-  if (rbName && currentUser.name && (!rbName.value || rbName.value === 'Archit Prajapati')) {
+  if (rbName && !rbName.dataset.userEdited && currentUser.name && (!rbName.value || rbName.value === 'Archit Prajapati')) {
     rbName.value = currentUser.name;
   }
   const rbTitle = document.getElementById('rbTitle');
-  if (rbTitle && currentUser.role) {
+  if (rbTitle && !rbTitle.dataset.userEdited && currentUser.role && (!rbTitle.value || rbTitle.value === 'Senior Full Stack Software Engineer')) {
     rbTitle.value = currentUser.role;
   }
   const rbEmail = document.getElementById('rbEmail');
-  if (rbEmail && currentUser.email && (!rbEmail.value || rbEmail.value === 'archit@example.com')) {
+  if (rbEmail && !rbEmail.dataset.userEdited && currentUser.email && (!rbEmail.value || rbEmail.value === 'archit@example.com')) {
     rbEmail.value = currentUser.email;
   }
   const rbSkills = document.getElementById('rbSkills');
-  if (rbSkills && currentUser.target_skills) {
+  if (rbSkills && !rbSkills.dataset.userEdited && currentUser.target_skills && (!rbSkills.value || rbSkills.value.startsWith('JavaScript (ES6+)'))) {
     rbSkills.value = currentUser.target_skills;
   }
   if (typeof updateResumePreview === 'function') {
@@ -1606,10 +1606,7 @@ async function evaluateCandidateAnswerWithAI(answer) {
 }
 
 /* --------------------------------------------------------------------------
-   AI RESUME BUILDER ENGINE WITH REAL AI
-   -------------------------------------------------------------------------- */
-/* --------------------------------------------------------------------------
-   INTERACTIVE ATS RESUME BUILDER ENGINE
+   INTERACTIVE ATS RESUME BUILDER ENGINE & VECTOR PDF GENERATOR
    -------------------------------------------------------------------------- */
 let builderExperiences = [
   {
@@ -1640,6 +1637,31 @@ let builderEducations = [
   }
 ];
 
+function escapeHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function formatSkillsText(raw) {
+  if (!raw) return '';
+  return String(raw)
+    .split('\n')
+    .map(line => {
+      const trimmed = line.trim();
+      if (!trimmed) return '';
+      if (trimmed.includes(',')) {
+        return trimmed.split(',').map(s => s.trim()).filter(Boolean).join(', ');
+      }
+      return trimmed;
+    })
+    .filter(Boolean)
+    .join('\n');
+}
+
 function initResumeBuilder() {
   const nameInput = document.getElementById('rbFullName');
   if (!nameInput) return;
@@ -1649,7 +1671,10 @@ function initResumeBuilder() {
   inputs.forEach(id => {
     const el = document.getElementById(id);
     if (el) {
-      el.addEventListener('input', updateResumePreview);
+      el.addEventListener('input', () => {
+        el.dataset.userEdited = 'true';
+        updateResumePreview();
+      });
     }
   });
 
@@ -1659,76 +1684,114 @@ function initResumeBuilder() {
   updateResumePreview();
 }
 
-function updateResumePreview() {
-  const name = document.getElementById('rbFullName')?.value?.trim() || 'YOUR NAME';
-  const title = document.getElementById('rbTitle')?.value?.trim() || 'TARGET JOB ROLE';
+function getFilledResumeData() {
+  const fullName = document.getElementById('rbFullName')?.value?.trim() || '';
+  const title = document.getElementById('rbTitle')?.value?.trim() || '';
   const email = document.getElementById('rbEmail')?.value?.trim() || '';
   const phone = document.getElementById('rbPhone')?.value?.trim() || '';
-  const loc = document.getElementById('rbLocation')?.value?.trim() || '';
+  const location = document.getElementById('rbLocation')?.value?.trim() || '';
   const linkedin = document.getElementById('rbLinkedin')?.value?.trim() || '';
   const website = document.getElementById('rbWebsite')?.value?.trim() || '';
   const summary = document.getElementById('rbSummary')?.value?.trim() || '';
-  const skills = document.getElementById('rbSkills')?.value?.trim() || '';
-  const certs = document.getElementById('rbCertifications')?.value?.trim() || '';
+  const skills = formatSkillsText(document.getElementById('rbSkills')?.value?.trim() || '');
+  const certifications = document.getElementById('rbCertifications')?.value?.trim() || '';
 
-  // Header
+  const experiences = builderExperiences.filter(exp =>
+    (exp.title || '').trim() || (exp.company || '').trim() || (exp.dates || '').trim() || (exp.bullets || '').trim()
+  );
+  const projects = builderProjects.filter(proj =>
+    (proj.title || '').trim() || (proj.tech || '').trim() || (proj.desc || '').trim()
+  );
+  const educations = builderEducations.filter(edu =>
+    (edu.degree || '').trim() || (edu.school || '').trim() || (edu.dates || '').trim() || (edu.score || '').trim()
+  );
+
+  return {
+    fullName,
+    title,
+    email,
+    phone,
+    location,
+    linkedin,
+    website,
+    summary,
+    skills,
+    experiences,
+    projects,
+    educations,
+    certifications
+  };
+}
+
+function updateResumePreview() {
+  const data = getFilledResumeData();
+
+  // 1. Header
   const pvName = document.getElementById('pvName');
-  if (pvName) pvName.innerText = name.toUpperCase();
+  if (pvName) pvName.innerText = (data.fullName || 'YOUR NAME').toUpperCase();
 
   const pvTitle = document.getElementById('pvTitle');
-  if (pvTitle) pvTitle.innerText = title.toUpperCase();
+  if (pvTitle) {
+    pvTitle.innerText = (data.title || 'TARGET JOB ROLE').toUpperCase();
+    pvTitle.style.display = data.title ? 'block' : 'none';
+  }
 
   // Contact items with icons and separators
   const pvContact = document.getElementById('pvContact');
   if (pvContact) {
     const parts = [];
-    if (email) parts.push(`<span><i class="fa-solid fa-envelope"></i> ${email}</span>`);
-    if (phone) parts.push(`<span><i class="fa-solid fa-phone"></i> ${phone}</span>`);
-    if (loc) parts.push(`<span><i class="fa-solid fa-location-dot"></i> ${loc}</span>`);
-    if (linkedin) parts.push(`<span><i class="fa-brands fa-linkedin"></i> ${linkedin}</span>`);
-    if (website) parts.push(`<span><i class="fa-brands fa-github"></i> ${website}</span>`);
+    if (data.email) parts.push(`<span><i class="fa-solid fa-envelope"></i> ${escapeHtml(data.email)}</span>`);
+    if (data.phone) parts.push(`<span><i class="fa-solid fa-phone"></i> ${escapeHtml(data.phone)}</span>`);
+    if (data.location) parts.push(`<span><i class="fa-solid fa-location-dot"></i> ${escapeHtml(data.location)}</span>`);
+    if (data.linkedin) parts.push(`<span><i class="fa-brands fa-linkedin"></i> ${escapeHtml(data.linkedin)}</span>`);
+    if (data.website) parts.push(`<span><i class="fa-brands fa-github"></i> ${escapeHtml(data.website)}</span>`);
     pvContact.innerHTML = parts.join(' <span class="sep">|</span> ');
+    pvContact.style.display = parts.length > 0 ? 'flex' : 'none';
   }
 
-  // Summary section
+  // 2. Professional Summary
   const pvSummarySection = document.getElementById('pvSummarySection');
   const pvSummary = document.getElementById('pvSummary');
   if (pvSummarySection && pvSummary) {
-    if (summary) {
+    if (data.summary) {
       pvSummarySection.style.display = 'block';
-      pvSummary.innerText = summary;
+      const paragraphs = data.summary.split('\n').map(p => p.trim()).filter(Boolean);
+      pvSummary.innerHTML = paragraphs.map(p => escapeHtml(p)).join('<br><br>');
     } else {
       pvSummarySection.style.display = 'none';
     }
   }
 
-  // Skills section
+  // 3. Technical Skills
   const pvSkillsSection = document.getElementById('pvSkillsSection');
   const pvSkills = document.getElementById('pvSkills');
   if (pvSkillsSection && pvSkills) {
-    if (skills) {
+    if (data.skills) {
       pvSkillsSection.style.display = 'block';
-      pvSkills.innerText = skills;
+      pvSkills.innerText = data.skills;
     } else {
       pvSkillsSection.style.display = 'none';
     }
   }
 
-  // Experience section
+  // 4. Work Experience
   const pvExpSection = document.getElementById('pvExperienceSection');
   const pvExpList = document.getElementById('pvExperienceList');
   if (pvExpSection && pvExpList) {
-    if (builderExperiences.length > 0) {
+    if (data.experiences.length > 0) {
       pvExpSection.style.display = 'block';
-      pvExpList.innerHTML = builderExperiences.map(exp => {
+      pvExpList.innerHTML = data.experiences.map(exp => {
         const bulletLines = (exp.bullets || '').split('\n').map(b => b.trim()).filter(Boolean);
+        const headingText = exp.title && exp.company
+          ? `${escapeHtml(exp.title)} — ${escapeHtml(exp.company)}`
+          : escapeHtml(exp.title || exp.company || 'Position');
         return `
           <div class="exp-item">
             <div class="exp-header">
-              <strong>${exp.title || 'Position'} ${exp.company ? '— ' + exp.company : ''}</strong>
-              <span>${exp.dates || ''}</span>
+              <strong>${headingText}</strong>
+              <span>${escapeHtml(exp.dates || '')}</span>
             </div>
-            ${bulletLines.length > 0 ? `<ul>${bulletLines.map(b => `<li>${b.replace(/^[•\-\*]\s*/, '')}</li>`).join('')}</ul>` : ''}
+            ${bulletLines.length > 0 ? `<ul>${bulletLines.map(b => `<li>${escapeHtml(b.replace(/^[•\-\*]\s*/, ''))}</li>`).join('')}</ul>` : ''}
           </div>
         `;
       }).join('');
@@ -1737,39 +1800,48 @@ function updateResumePreview() {
     }
   }
 
-  // Projects section
+  // 5. Key Projects
   const pvProjSection = document.getElementById('pvProjectsSection');
   const pvProjList = document.getElementById('pvProjectsList');
   if (pvProjSection && pvProjList) {
-    if (builderProjects.length > 0) {
+    if (data.projects.length > 0) {
       pvProjSection.style.display = 'block';
-      pvProjList.innerHTML = builderProjects.map(proj => `
-        <div class="project-item">
-          <div class="project-header">
-            <strong>${proj.title || 'Project Name'}</strong>
-            <span class="project-tech">${proj.tech || ''}</span>
+      pvProjList.innerHTML = data.projects.map(proj => {
+        const descLines = (proj.desc || '').split('\n').map(l => l.trim()).filter(Boolean);
+        let descHtml = '';
+        if (descLines.length > 1) {
+          descHtml = `<ul class="res-bullet-list">${descLines.map(l => `<li>${escapeHtml(l.replace(/^[•\-\*]\s*/, ''))}</li>`).join('')}</ul>`;
+        } else if (descLines.length === 1) {
+          descHtml = `<p class="project-desc">${escapeHtml(descLines[0])}</p>`;
+        }
+        return `
+          <div class="project-item">
+            <div class="project-header">
+              <strong>${escapeHtml(proj.title || 'Project Name')}</strong>
+              <span class="project-tech">${escapeHtml(proj.tech || '')}</span>
+            </div>
+            ${descHtml}
           </div>
-          ${proj.desc ? `<p class="project-desc">${proj.desc}</p>` : ''}
-        </div>
-      `).join('');
+        `;
+      }).join('');
     } else {
       pvProjSection.style.display = 'none';
     }
   }
 
-  // Education section
+  // 6. Education
   const pvEduSection = document.getElementById('pvEducationSection');
   const pvEduList = document.getElementById('pvEducationList');
   if (pvEduSection && pvEduList) {
-    if (builderEducations.length > 0) {
+    if (data.educations.length > 0) {
       pvEduSection.style.display = 'block';
-      pvEduList.innerHTML = builderEducations.map(edu => `
+      pvEduList.innerHTML = data.educations.map(edu => `
         <div class="edu-item">
           <div class="edu-header">
-            <strong>${edu.degree || 'Degree'} ${edu.score ? `(${edu.score})` : ''}</strong>
-            <span>${edu.dates || ''}</span>
+            <strong>${escapeHtml(edu.degree || 'Degree')}${edu.score ? ` (${escapeHtml(edu.score)})` : ''}</strong>
+            <span>${escapeHtml(edu.dates || '')}</span>
           </div>
-          <div class="edu-school">${edu.school || ''}</div>
+          ${edu.school ? `<div class="edu-school">${escapeHtml(edu.school)}</div>` : ''}
         </div>
       `).join('');
     } else {
@@ -1777,13 +1849,18 @@ function updateResumePreview() {
     }
   }
 
-  // Certifications section
+  // 7. Certifications & Honors
   const pvCertSection = document.getElementById('pvCertSection');
   const pvCerts = document.getElementById('pvCertifications');
   if (pvCertSection && pvCerts) {
-    if (certs) {
+    if (data.certifications) {
       pvCertSection.style.display = 'block';
-      pvCerts.innerText = certs;
+      const certLines = data.certifications.split('\n').map(l => l.trim()).filter(Boolean);
+      if (certLines.length > 1) {
+        pvCerts.innerHTML = `<ul class="res-bullet-list">${certLines.map(l => `<li>${escapeHtml(l.replace(/^[•\-\*]\s*/, ''))}</li>`).join('')}</ul>`;
+      } else {
+        pvCerts.innerText = certLines[0] || '';
+      }
     } else {
       pvCertSection.style.display = 'none';
     }
@@ -1803,16 +1880,16 @@ function renderExperienceFields() {
       <div class="form-row">
         <div class="form-group flex-1">
           <label>Job Title</label>
-          <input type="text" class="form-control form-control-sm" value="${exp.title}" placeholder="e.g. Software Engineer" oninput="updateExperienceItem(${exp.id}, 'title', this.value)">
+          <input type="text" class="form-control form-control-sm" value="${escapeHtml(exp.title)}" placeholder="e.g. Software Engineer" oninput="updateExperienceItem(${exp.id}, 'title', this.value)">
         </div>
         <div class="form-group flex-1">
           <label>Company / Organization</label>
-          <input type="text" class="form-control form-control-sm" value="${exp.company}" placeholder="e.g. Google / TechCorp" oninput="updateExperienceItem(${exp.id}, 'company', this.value)">
+          <input type="text" class="form-control form-control-sm" value="${escapeHtml(exp.company)}" placeholder="e.g. Google / TechCorp" oninput="updateExperienceItem(${exp.id}, 'company', this.value)">
         </div>
       </div>
       <div class="form-group mt-2">
         <label>Dates / Period</label>
-        <input type="text" class="form-control form-control-sm" value="${exp.dates}" placeholder="e.g. 2023 – Present" oninput="updateExperienceItem(${exp.id}, 'dates', this.value)">
+        <input type="text" class="form-control form-control-sm" value="${escapeHtml(exp.dates)}" placeholder="e.g. 2023 – Present" oninput="updateExperienceItem(${exp.id}, 'dates', this.value)">
       </div>
       <div class="form-group mt-2">
         <div class="d-flex justify-content-between align-items-center mb-1">
@@ -1821,7 +1898,7 @@ function renderExperienceFields() {
             <i class="fa-solid fa-wand-magic-sparkles"></i> AI Enhance
           </button>
         </div>
-        <textarea class="form-textarea form-textarea-sm" rows="3" placeholder="Enter bullet points (start each achievement with an action verb)..." oninput="updateExperienceItem(${exp.id}, 'bullets', this.value)">${exp.bullets}</textarea>
+        <textarea class="form-textarea form-textarea-sm" rows="3" placeholder="Enter bullet points (start each achievement with an action verb)..." oninput="updateExperienceItem(${exp.id}, 'bullets', this.value)">${escapeHtml(exp.bullets)}</textarea>
       </div>
     </div>
   `).join('');
@@ -1866,16 +1943,16 @@ function renderProjectFields() {
       <div class="form-row">
         <div class="form-group flex-1">
           <label>Project Title</label>
-          <input type="text" class="form-control form-control-sm" value="${proj.title}" placeholder="e.g. E-Commerce Platform" oninput="updateProjectItem(${proj.id}, 'title', this.value)">
+          <input type="text" class="form-control form-control-sm" value="${escapeHtml(proj.title)}" placeholder="e.g. E-Commerce Platform" oninput="updateProjectItem(${proj.id}, 'title', this.value)">
         </div>
         <div class="form-group flex-1">
           <label>Tech Stack / Technologies</label>
-          <input type="text" class="form-control form-control-sm" value="${proj.tech}" placeholder="e.g. React, Node.js, MongoDB" oninput="updateProjectItem(${proj.id}, 'tech', this.value)">
+          <input type="text" class="form-control form-control-sm" value="${escapeHtml(proj.tech)}" placeholder="e.g. React, Node.js, MongoDB" oninput="updateProjectItem(${proj.id}, 'tech', this.value)">
         </div>
       </div>
       <div class="form-group mt-2">
         <label>Project Description / Measurable Results</label>
-        <textarea class="form-textarea form-textarea-sm" rows="2" placeholder="Briefly describe what you built and the impact it achieved..." oninput="updateProjectItem(${proj.id}, 'desc', this.value)">${proj.desc}</textarea>
+        <textarea class="form-textarea form-textarea-sm" rows="2" placeholder="Briefly describe what you built and the impact it achieved..." oninput="updateProjectItem(${proj.id}, 'desc', this.value)">${escapeHtml(proj.desc)}</textarea>
       </div>
     </div>
   `).join('');
@@ -1919,21 +1996,21 @@ function renderEducationFields() {
       <div class="form-row">
         <div class="form-group flex-1">
           <label>Degree / Course</label>
-          <input type="text" class="form-control form-control-sm" value="${edu.degree}" placeholder="e.g. B.Tech / Diploma in CE" oninput="updateEducationItem(${edu.id}, 'degree', this.value)">
+          <input type="text" class="form-control form-control-sm" value="${escapeHtml(edu.degree)}" placeholder="e.g. B.Tech / Diploma in CE" oninput="updateEducationItem(${edu.id}, 'degree', this.value)">
         </div>
         <div class="form-group flex-1">
           <label>School / University</label>
-          <input type="text" class="form-control form-control-sm" value="${edu.school}" placeholder="e.g. Gujarat Technological University" oninput="updateEducationItem(${edu.id}, 'school', this.value)">
+          <input type="text" class="form-control form-control-sm" value="${escapeHtml(edu.school)}" placeholder="e.g. Gujarat Technological University" oninput="updateEducationItem(${edu.id}, 'school', this.value)">
         </div>
       </div>
       <div class="form-row mt-2">
         <div class="form-group flex-1">
           <label>Dates / Year</label>
-          <input type="text" class="form-control form-control-sm" value="${edu.dates}" placeholder="e.g. 2020 – 2024" oninput="updateEducationItem(${edu.id}, 'dates', this.value)">
+          <input type="text" class="form-control form-control-sm" value="${escapeHtml(edu.dates)}" placeholder="e.g. 2020 – 2024" oninput="updateEducationItem(${edu.id}, 'dates', this.value)">
         </div>
         <div class="form-group flex-1">
           <label>Score / CGPA (Optional)</label>
-          <input type="text" class="form-control form-control-sm" value="${edu.score}" placeholder="e.g. CGPA: 8.5 / 10" oninput="updateEducationItem(${edu.id}, 'score', this.value)">
+          <input type="text" class="form-control form-control-sm" value="${escapeHtml(edu.score)}" placeholder="e.g. CGPA: 8.5 / 10" oninput="updateEducationItem(${edu.id}, 'score', this.value)">
         </div>
       </div>
     </div>
@@ -2020,7 +2097,10 @@ function clearResumeForm() {
   const fields = ['rbFullName', 'rbTitle', 'rbEmail', 'rbPhone', 'rbLocation', 'rbLinkedin', 'rbWebsite', 'rbSummary', 'rbSkills', 'rbCertifications'];
   fields.forEach(f => {
     const el = document.getElementById(f);
-    if (el) el.value = '';
+    if (el) {
+      el.value = '';
+      el.dataset.userEdited = 'true';
+    }
   });
 
   builderExperiences = [];
@@ -2055,6 +2135,7 @@ async function enhanceSummaryWithAI() {
       const data = await res.json();
       if (data.enhanced_summary) {
         summaryInput.value = data.enhanced_summary.trim();
+        summaryInput.dataset.userEdited = 'true';
         updateResumePreview();
         return;
       }
@@ -2069,6 +2150,7 @@ async function enhanceSummaryWithAI() {
   }
 
   summaryInput.value = `Results-driven ${role} with demonstrated proficiency in architecting scalable solutions, optimizing performance bottlenecks, and delivering business value through clean, maintainable engineering practices.`;
+  summaryInput.dataset.userEdited = 'true';
   updateResumePreview();
 }
 
@@ -2113,46 +2195,534 @@ async function enhanceExpBulletWithAI(expId, btn) {
   updateResumePreview();
 }
 
-// Clean PDF Download & Print
-function downloadResumePDF() {
-  const element = document.getElementById('resumePreviewDoc');
-  if (!element) return;
+// ==========================================================================
+// VECTOR ATS PDF ENGINE (jsPDF) — JUSTIFIED, SEQUENTIAL, ZERO CLIPPING
+// ==========================================================================
+function sanitizePdfLine(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+    .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
+    .replace(/[\u2013\u2014\u2015]/g, '-')
+    .replace(/\u2026/g, '...')
+    .replace(/\u00A0/g, ' ')
+    .replace(/\t/g, ' ')
+    .replace(/[^\x20-\x7E\xA0-\xFF]/g, '')
+    .replace(/[ ]{2,}/g, ' ')
+    .trim();
+}
 
+function drawJustifiedPdfBlock(doc, rawText, x, y, maxWidth, opts = {}) {
+  const fontSize = opts.fontSize || 9.5;
+  const lineHeight = opts.lineHeight || 4.6;
+  const color = opts.color || [30, 41, 59];
+  const fontStyle = opts.fontStyle || 'normal';
+  const justify = opts.justify !== false;
+  const maxY = opts.maxY || 282;
+  const newPageY = opts.newPageY || 18;
+  const bullet = opts.bullet || false;
+  const bulletX = opts.bulletX || (x - 3.3);
+
+  const clean = sanitizePdfLine(rawText);
+  if (!clean) return y;
+
+  doc.setFont('helvetica', fontStyle);
+  doc.setFontSize(fontSize);
+  doc.setTextColor(color[0], color[1], color[2]);
+
+  const wrappedLines = doc.splitTextToSize(clean, maxWidth);
+  const normalSpaceW = doc.getTextWidth(' ');
+
+  for (let i = 0; i < wrappedLines.length; i++) {
+    const line = wrappedLines[i].trim();
+    if (!line) continue;
+
+    // Automatic page break check BEFORE drawing each line (never cuts lines across pages)
+    if (y + lineHeight > maxY) {
+      doc.addPage();
+      y = newPageY;
+      doc.setFont('helvetica', fontStyle);
+      doc.setFontSize(fontSize);
+      doc.setTextColor(color[0], color[1], color[2]);
+    }
+
+    // Crisp vector bullet dot vertically aligned with first line of bullet text
+    if (bullet && i === 0) {
+      doc.setFillColor(15, 23, 42);
+      doc.circle(bulletX, y - 1.05, 0.58, 'F');
+    }
+
+    const isLastLine = (i === wrappedLines.length - 1);
+    const words = line.split(/\s+/);
+
+    if (justify && !isLastLine && words.length > 1) {
+      const wordsWidth = words.reduce((sum, w) => sum + doc.getTextWidth(w), 0);
+      const remaining = maxWidth - wordsWidth;
+      const gap = remaining / (words.length - 1);
+
+      // Justify smoothly when word spacing stays within clean typographic bounds
+      if (gap >= normalSpaceW * 0.5 && gap <= normalSpaceW * 3.8) {
+        let cursorX = x;
+        for (let w = 0; w < words.length; w++) {
+          doc.text(words[w], cursorX, y);
+          cursorX += doc.getTextWidth(words[w]) + gap;
+        }
+      } else {
+        doc.text(line, x, y);
+      }
+    } else {
+      doc.text(line, x, y);
+    }
+
+    y += lineHeight;
+  }
+
+  return y;
+}
+
+function drawPdfSectionHeading(doc, title, y, marginX, contentW, maxY, newPageY) {
+  // Orphan heading protection: keep heading + divider + first 2 lines together
+  if (y + 18 > maxY) {
+    doc.addPage();
+    y = newPageY;
+  }
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10.5);
+  doc.setTextColor(15, 23, 42);
+  doc.text(sanitizePdfLine(title).toUpperCase(), marginX, y);
+
+  y += 1.7;
+  doc.setDrawColor(148, 163, 184);
+  doc.setLineWidth(0.32);
+  doc.line(marginX, y, marginX + contentW, y);
+
+  y += 5.2;
+  return y;
+}
+
+function downloadResumePDF() {
+  const data = getFilledResumeData();
   const btn = document.getElementById('btnDownloadPdf');
   const originalText = btn ? btn.innerHTML : '';
+
+  const jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : window.jsPDF;
+  if (!jsPDFCtor) {
+    // Fallback cleanly to our fixed @media print stylesheet if CDN failed
+    printResumeDocument();
+    return;
+  }
+
   if (btn) {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating PDF...';
     btn.disabled = true;
   }
 
-  const nameInput = document.getElementById('rbFullName');
-  const candidateName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : 'Resume';
-  const cleanFileName = `${candidateName.replace(/[^a-zA-Z0-9_-]/g, '_')}_Resume.pdf`;
-
-  if (window.html2pdf) {
-    const opt = {
-      margin:       [8, 8, 8, 8],
-      filename:     cleanFileName,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true, letterRendering: true, logging: false },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    html2pdf().set(opt).from(element).save().then(() => {
-      if (btn) {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-      }
-    }).catch(err => {
-      console.warn("html2pdf notice, engaging print view:", err);
-      if (btn) {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-      }
-      printResumeDocument();
+  try {
+    const doc = new jsPDFCtor({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+      compress: true
     });
-  } else {
+
+    const PAGE_W = 210;
+    const PAGE_H = 297;
+    const MARGIN_X = 15;
+    const NEW_PAGE_Y = 18;
+    const MAX_Y = PAGE_H - 14;
+    const CONTENT_W = PAGE_W - MARGIN_X * 2; // 180mm
+
+    let y = 18;
+
+    // ------------------------------------------------------------------------
+    // 1. HEADER: NAME, TARGET TITLE & CENTERED WRAPPED CONTACT BAR
+    // ------------------------------------------------------------------------
+    const nameStr = sanitizePdfLine(data.fullName || 'YOUR NAME').toUpperCase();
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(17.5);
+    doc.setTextColor(15, 23, 42);
+    const nameLines = doc.splitTextToSize(nameStr, CONTENT_W);
+    for (const nl of nameLines) {
+      doc.text(nl, PAGE_W / 2, y, { align: 'center' });
+      y += 6.8;
+    }
+
+    if (data.title) {
+      const titleStr = sanitizePdfLine(data.title).toUpperCase();
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9.8);
+      doc.setTextColor(51, 65, 85);
+      const roleLines = doc.splitTextToSize(titleStr, CONTENT_W);
+      for (const rl of roleLines) {
+        doc.text(rl, PAGE_W / 2, y, { align: 'center' });
+        y += 4.6;
+      }
+    }
+
+    // Contact details wrapped cleanly at item boundaries (zero overflow/cutting)
+    const contactItems = [data.email, data.phone, data.location, data.linkedin, data.website]
+      .map(sanitizePdfLine)
+      .filter(Boolean);
+
+    if (contactItems.length > 0) {
+      y += 0.6;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.8);
+      doc.setTextColor(71, 85, 105);
+
+      const sep = '  |  ';
+      const contactRows = [];
+      let currentRow = '';
+      for (const item of contactItems) {
+        const candidate = currentRow ? `${currentRow}${sep}${item}` : item;
+        if (doc.getTextWidth(candidate) <= CONTENT_W) {
+          currentRow = candidate;
+        } else {
+          if (currentRow) contactRows.push(currentRow);
+          if (doc.getTextWidth(item) > CONTENT_W) {
+            const splitParts = doc.splitTextToSize(item, CONTENT_W);
+            contactRows.push(...splitParts.slice(0, -1));
+            currentRow = splitParts[splitParts.length - 1];
+          } else {
+            currentRow = item;
+          }
+        }
+      }
+      if (currentRow) contactRows.push(currentRow);
+
+      for (const row of contactRows) {
+        doc.text(row, PAGE_W / 2, y, { align: 'center' });
+        y += 4.2;
+      }
+    }
+
+    // Bold Header Divider Line
+    y += 0.8;
+    doc.setDrawColor(15, 23, 42);
+    doc.setLineWidth(0.6);
+    doc.line(MARGIN_X, y, PAGE_W - MARGIN_X, y);
+    y += 7;
+
+    // ------------------------------------------------------------------------
+    // 2. PROFESSIONAL SUMMARY (JUSTIFIED)
+    // ------------------------------------------------------------------------
+    if (data.summary) {
+      y = drawPdfSectionHeading(doc, 'PROFESSIONAL SUMMARY', y, MARGIN_X, CONTENT_W, MAX_Y, NEW_PAGE_Y);
+      const paragraphs = data.summary.split('\n').map(p => p.trim()).filter(Boolean);
+      for (let pIdx = 0; pIdx < paragraphs.length; pIdx++) {
+        y = drawJustifiedPdfBlock(doc, paragraphs[pIdx], MARGIN_X, y, CONTENT_W, {
+          fontSize: 9.4,
+          lineHeight: 4.6,
+          color: [30, 41, 59],
+          justify: true,
+          maxY: MAX_Y,
+          newPageY: NEW_PAGE_Y
+        });
+        if (pIdx < paragraphs.length - 1) y += 1.6;
+      }
+      y += 3.5;
+    }
+
+    // ------------------------------------------------------------------------
+    // 3. TECHNICAL SKILLS (COMMA-NORMALIZED & JUSTIFIED)
+    // ------------------------------------------------------------------------
+    if (data.skills) {
+      y = drawPdfSectionHeading(doc, 'TECHNICAL SKILLS', y, MARGIN_X, CONTENT_W, MAX_Y, NEW_PAGE_Y);
+      const skillLines = data.skills.split('\n').map(l => l.trim()).filter(Boolean);
+      for (let sIdx = 0; sIdx < skillLines.length; sIdx++) {
+        y = drawJustifiedPdfBlock(doc, skillLines[sIdx], MARGIN_X, y, CONTENT_W, {
+          fontSize: 9.4,
+          lineHeight: 4.6,
+          color: [30, 41, 59],
+          justify: true,
+          maxY: MAX_Y,
+          newPageY: NEW_PAGE_Y
+        });
+        if (sIdx < skillLines.length - 1) y += 1.2;
+      }
+      y += 3.5;
+    }
+
+    // ------------------------------------------------------------------------
+    // 4. WORK EXPERIENCE (SEQUENTIAL, COLLISION-FREE, JUSTIFIED BULLETS)
+    // ------------------------------------------------------------------------
+    if (data.experiences.length > 0) {
+      y = drawPdfSectionHeading(doc, 'WORK EXPERIENCE', y, MARGIN_X, CONTENT_W, MAX_Y, NEW_PAGE_Y);
+
+      for (const exp of data.experiences) {
+        if (y + 15 > MAX_Y) {
+          doc.addPage();
+          y = NEW_PAGE_Y;
+        }
+
+        const headingStr = sanitizePdfLine(
+          exp.title && exp.company ? `${exp.title} - ${exp.company}` : (exp.title || exp.company || 'Experience')
+        );
+        const datesStr = sanitizePdfLine(exp.dates || '');
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.8);
+        const datesW = datesStr ? doc.getTextWidth(datesStr) : 0;
+        const titleMaxW = datesStr ? Math.max(95, CONTENT_W - datesW - 6) : CONTENT_W;
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9.8);
+        doc.setTextColor(15, 23, 42);
+        const headingLines = doc.splitTextToSize(headingStr, titleMaxW);
+
+        doc.text(headingLines[0], MARGIN_X, y);
+        if (datesStr) {
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(8.8);
+          doc.setTextColor(71, 85, 105);
+          doc.text(datesStr, PAGE_W - MARGIN_X, y, { align: 'right' });
+        }
+        y += 4.5;
+
+        if (headingLines.length > 1) {
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(9.8);
+          doc.setTextColor(15, 23, 42);
+          for (let h = 1; h < headingLines.length; h++) {
+            doc.text(headingLines[h], MARGIN_X, y);
+            y += 4.4;
+          }
+        }
+
+        const bulletLines = (exp.bullets || '').split('\n').map(b => b.trim()).filter(Boolean);
+        for (const rawBullet of bulletLines) {
+          const cleanBullet = rawBullet.replace(/^[•\-\*]\s*/, '');
+          y = drawJustifiedPdfBlock(doc, cleanBullet, MARGIN_X + 5.5, y, CONTENT_W - 5.5, {
+            fontSize: 9.2,
+            lineHeight: 4.4,
+            color: [30, 41, 59],
+            justify: true,
+            bullet: true,
+            bulletX: MARGIN_X + 2.2,
+            maxY: MAX_Y,
+            newPageY: NEW_PAGE_Y
+          });
+          y += 0.9;
+        }
+        y += 2.6;
+      }
+      y += 1.2;
+    }
+
+    // ------------------------------------------------------------------------
+    // 5. KEY PROJECTS (COLLISION-FREE TITLE + TECH STACK, JUSTIFIED DESC)
+    // ------------------------------------------------------------------------
+    if (data.projects.length > 0) {
+      y = drawPdfSectionHeading(doc, 'KEY PROJECTS', y, MARGIN_X, CONTENT_W, MAX_Y, NEW_PAGE_Y);
+
+      for (const proj of data.projects) {
+        const pTitle = sanitizePdfLine(proj.title || 'Project');
+        const pTech = sanitizePdfLine(proj.tech || '');
+        const descLines = (proj.desc || '').split('\n').map(l => l.trim()).filter(Boolean);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9.8);
+        const pTitleW = doc.getTextWidth(pTitle);
+
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(8.8);
+        const pTechW = pTech ? doc.getTextWidth(pTech) : 0;
+
+        // Estimate block height so short projects stay cleanly together instead of splitting 1 orphan line across pages
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9.2);
+        let estDescLines = 0;
+        for (const dl of descLines) {
+          estDescLines += doc.splitTextToSize(sanitizePdfLine(dl.replace(/^[•\-\*]\s*/, '')), descLines.length > 1 ? CONTENT_W - 5.5 : CONTENT_W).length;
+        }
+        const headerH = (pTech && (pTitleW + pTechW + 8 <= CONTENT_W)) ? 4.5 : (4.5 + (pTech ? 4.5 : 0));
+        const estProjH = Math.min(34, headerH + estDescLines * 4.5 + 2);
+
+        if (y + estProjH > MAX_Y) {
+          doc.addPage();
+          y = NEW_PAGE_Y;
+        }
+
+        if (pTech && (pTitleW + pTechW + 8 <= CONTENT_W)) {
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(9.8);
+          doc.setTextColor(15, 23, 42);
+          doc.text(pTitle, MARGIN_X, y);
+
+          doc.setFont('helvetica', 'italic');
+          doc.setFontSize(8.8);
+          doc.setTextColor(71, 85, 105);
+          doc.text(pTech, PAGE_W - MARGIN_X, y, { align: 'right' });
+          y += 4.5;
+        } else {
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(9.8);
+          doc.setTextColor(15, 23, 42);
+          const pTitleLines = doc.splitTextToSize(pTitle, CONTENT_W);
+          for (const tl of pTitleLines) {
+            doc.text(tl, MARGIN_X, y);
+            y += 4.4;
+          }
+          if (pTech) {
+            y = drawJustifiedPdfBlock(doc, `Tech Stack: ${pTech}`, MARGIN_X, y, CONTENT_W, {
+              fontSize: 8.6,
+              lineHeight: 4.1,
+              color: [71, 85, 105],
+              fontStyle: 'italic',
+              justify: false,
+              maxY: MAX_Y,
+              newPageY: NEW_PAGE_Y
+            });
+            y += 0.4;
+          }
+        }
+
+        if (descLines.length > 1) {
+          for (const dl of descLines) {
+            const cleanDl = dl.replace(/^[•\-\*]\s*/, '');
+            y = drawJustifiedPdfBlock(doc, cleanDl, MARGIN_X + 5.5, y, CONTENT_W - 5.5, {
+              fontSize: 9.2,
+              lineHeight: 4.4,
+              color: [30, 41, 59],
+              justify: true,
+              bullet: true,
+              bulletX: MARGIN_X + 2.2,
+              maxY: MAX_Y,
+              newPageY: NEW_PAGE_Y
+            });
+            y += 0.8;
+          }
+        } else if (descLines.length === 1) {
+          y = drawJustifiedPdfBlock(doc, descLines[0], MARGIN_X, y, CONTENT_W, {
+            fontSize: 9.2,
+            lineHeight: 4.5,
+            color: [30, 41, 59],
+            justify: true,
+            maxY: MAX_Y,
+            newPageY: NEW_PAGE_Y
+          });
+        }
+        y += 2.6;
+      }
+      y += 1.2;
+    }
+
+    // ------------------------------------------------------------------------
+    // 6. EDUCATION
+    // ------------------------------------------------------------------------
+    if (data.educations.length > 0) {
+      y = drawPdfSectionHeading(doc, 'EDUCATION', y, MARGIN_X, CONTENT_W, MAX_Y, NEW_PAGE_Y);
+
+      for (const edu of data.educations) {
+        if (y + 12 > MAX_Y) {
+          doc.addPage();
+          y = NEW_PAGE_Y;
+        }
+
+        const degreeStr = sanitizePdfLine(
+          edu.degree ? (edu.score ? `${edu.degree} (${edu.score})` : edu.degree) : (edu.score || 'Education')
+        );
+        const datesStr = sanitizePdfLine(edu.dates || '');
+        const schoolStr = sanitizePdfLine(edu.school || '');
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.8);
+        const datesW = datesStr ? doc.getTextWidth(datesStr) : 0;
+        const degMaxW = datesStr ? Math.max(95, CONTENT_W - datesW - 6) : CONTENT_W;
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9.6);
+        doc.setTextColor(15, 23, 42);
+        const degLines = doc.splitTextToSize(degreeStr, degMaxW);
+
+        doc.text(degLines[0], MARGIN_X, y);
+        if (datesStr) {
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(8.8);
+          doc.setTextColor(71, 85, 105);
+          doc.text(datesStr, PAGE_W - MARGIN_X, y, { align: 'right' });
+        }
+        y += 4.3;
+
+        if (degLines.length > 1) {
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(9.6);
+          doc.setTextColor(15, 23, 42);
+          for (let d = 1; d < degLines.length; d++) {
+            doc.text(degLines[d], MARGIN_X, y);
+            y += 4.2;
+          }
+        }
+
+        if (schoolStr) {
+          y = drawJustifiedPdfBlock(doc, schoolStr, MARGIN_X, y, CONTENT_W, {
+            fontSize: 9.0,
+            lineHeight: 4.2,
+            color: [71, 85, 105],
+            justify: false,
+            maxY: MAX_Y,
+            newPageY: NEW_PAGE_Y
+          });
+        }
+        y += 2.4;
+      }
+      y += 1.2;
+    }
+
+    // ------------------------------------------------------------------------
+    // 7. CERTIFICATIONS & HONORS
+    // ------------------------------------------------------------------------
+    if (data.certifications) {
+      y = drawPdfSectionHeading(doc, 'CERTIFICATIONS & HONORS', y, MARGIN_X, CONTENT_W, MAX_Y, NEW_PAGE_Y);
+      const certLines = data.certifications.split('\n').map(l => l.trim()).filter(Boolean);
+      if (certLines.length > 1) {
+        for (const cl of certLines) {
+          const cleanCl = cl.replace(/^[•\-\*]\s*/, '');
+          y = drawJustifiedPdfBlock(doc, cleanCl, MARGIN_X + 5.5, y, CONTENT_W - 5.5, {
+            fontSize: 9.2,
+            lineHeight: 4.4,
+            color: [30, 41, 59],
+            justify: true,
+            bullet: true,
+            bulletX: MARGIN_X + 2.2,
+            maxY: MAX_Y,
+            newPageY: NEW_PAGE_Y
+          });
+          y += 0.8;
+        }
+      } else if (certLines.length === 1) {
+        y = drawJustifiedPdfBlock(doc, certLines[0], MARGIN_X, y, CONTENT_W, {
+          fontSize: 9.3,
+          lineHeight: 4.6,
+          color: [30, 41, 59],
+          justify: true,
+          maxY: MAX_Y,
+          newPageY: NEW_PAGE_Y
+        });
+      }
+    }
+
+    // Add subtle page numbers ONLY on multi-page resumes
+    const totalPages = doc.getNumberOfPages();
+    if (totalPages > 1) {
+      for (let p = 1; p <= totalPages; p++) {
+        doc.setPage(p);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(100, 116, 139);
+        doc.text(`Page ${p} of ${totalPages}`, PAGE_W / 2, PAGE_H - 7, { align: 'center' });
+      }
+    }
+
+    const candidateName = sanitizePdfLine(data.fullName || 'Resume');
+    const cleanFileName = `${candidateName.replace(/[^a-zA-Z0-9_-]/g, '_')}_Resume.pdf`;
+    doc.save(cleanFileName);
+  } catch (err) {
+    console.error("Vector PDF generation error, falling back to print:", err);
     printResumeDocument();
+  } finally {
     if (btn) {
       btn.innerHTML = originalText;
       btn.disabled = false;
