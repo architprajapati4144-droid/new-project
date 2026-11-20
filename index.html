@@ -152,51 +152,61 @@
               </div>
 
               <div class="form-group mt-3">
-                <label><i class="fa-solid fa-briefcase"></i> Target Job Role / Desired Position</label>
-                <select id="pRegRole" class="form-select">
-                  <option value="Senior Full Stack Software Engineer">Senior Full Stack Engineer</option>
-                  <option value="Backend Developer (Node/Python/Java)">Backend Developer</option>
-                  <option value="Frontend Engineer (React/Next/Vue)">Frontend Engineer</option>
-                  <option value="Data Scientist / AI Engineer">Data Scientist / AI Specialist</option>
-                  <option value="DevOps & Cloud Architect">DevOps & Cloud Engineer</option>
-                  <option value="Product Manager / Tech Lead">Product Manager / Tech Lead</option>
-                  <option value="QA / SDET Automation Engineer">QA / SDET Automation Engineer</option>
-                  <option value="Cybersecurity Analyst">Cybersecurity Analyst</option>
+                <label><i class="fa-solid fa-building"></i> Target Industry</label>
+                <select id="pRegIndustry" class="form-select">
+                  <option value="Technology & Software">Technology & Software</option>
+                  <option value="Finance, Banking & Accounting">Finance, Banking & Accounting</option>
+                  <option value="Marketing, Sales & Media">Marketing, Sales & Media</option>
+                  <option value="Business, Management & Operations">Business, Management & Operations</option>
+                  <option value="Human Resources (HR) & Recruitment">Human Resources (HR) & Recruitment</option>
+                  <option value="Healthcare, Medical & Pharmacy">Healthcare, Medical & Pharmacy</option>
+                  <option value="Core Engineering & Manufacturing">Core Engineering & Manufacturing</option>
+                  <option value="Education, Teaching & Training">Education, Teaching & Training</option>
+                  <option value="Legal, Law & Government">Legal, Law & Government</option>
+                  <option value="Hospitality, Retail & Customer Service">Hospitality, Retail & Customer Service</option>
+                  <option value="__custom__">Other / Custom Industry...</option>
                 </select>
               </div>
 
-              <div class="row g-2 mt-2" style="display: flex; gap: 8px;">
-                <div class="form-group" style="flex: 1;">
-                  <label><i class="fa-solid fa-layer-group"></i> Experience Level</label>
-                  <select id="pRegExpLevel" class="form-select">
-                    <option value="Fresher / Entry-Level (0-1 yrs)">Fresher / Entry (0-1 yr)</option>
-                    <option value="Junior (1-2 yrs)">Junior (1-2 yrs)</option>
-                    <option value="Mid-Level (2-5 yrs)" selected>Mid-Level (2-5 yrs)</option>
-                    <option value="Senior (5-8 yrs)">Senior (5-8 yrs)</option>
-                    <option value="Lead / Staff (8+ yrs)">Lead / Staff (8+ yrs)</option>
+              <div class="form-group mt-2 hidden" id="pRegCustomIndustryWrap">
+                <label><i class="fa-solid fa-pen"></i> Enter Your Industry</label>
+                <input type="text" id="pRegCustomIndustry" class="form-control" placeholder="e.g. Agriculture, Aviation, Architecture, Fashion">
+              </div>
+
+              <div class="row g-2 mt-2" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <div class="form-group" style="flex: 1.2; min-width: 180px;">
+                  <label><i class="fa-solid fa-briefcase"></i> Target Job Role / Position</label>
+                  <select id="pRegRole" class="form-select">
+                    <option value="Full Stack Software Engineer">Full Stack Software Engineer</option>
                   </select>
                 </div>
-                <div class="form-group" style="flex: 1;">
-                  <label><i class="fa-solid fa-building"></i> Target Industry</label>
-                  <select id="pRegIndustry" class="form-select">
-                    <option value="Tech & Software Products" selected>Tech & Software</option>
-                    <option value="Finance & FinTech">FinTech / Banking</option>
-                    <option value="E-Commerce & Retail">E-Commerce</option>
-                    <option value="Healthcare & HealthTech">Healthcare</option>
-                    <option value="AI & Machine Learning">AI & Big Data</option>
-                    <option value="Consulting & Enterprise">Consulting / Services</option>
+                <div class="form-group" style="flex: 1; min-width: 160px;">
+                  <label><i class="fa-solid fa-layer-group"></i> Experience Level</label>
+                  <select id="pRegExpLevel" class="form-select">
+                    <option value="Student / Intern">Student / Intern</option>
+                    <option value="Fresher / Entry-Level (0-1 yrs)">Fresher / Entry (0-1 yr)</option>
+                    <option value="Junior (1-3 yrs)">Junior (1-3 yrs)</option>
+                    <option value="Mid-Level (3-5 yrs)" selected>Mid-Level (3-5 yrs)</option>
+                    <option value="Senior (5-8 yrs)">Senior (5-8 yrs)</option>
+                    <option value="Lead / Manager (8-12 yrs)">Lead / Manager (8-12 yrs)</option>
+                    <option value="Director / Executive (12+ yrs)">Director / Executive (12+ yrs)</option>
                   </select>
                 </div>
               </div>
 
+              <div class="form-group mt-2 hidden" id="pRegCustomRoleWrap">
+                <label><i class="fa-solid fa-user-tie"></i> Enter Your Exact Job Role</label>
+                <input type="text" id="pRegCustomRole" class="form-control" placeholder="e.g. Chartered Accountant, Civil Site Engineer, Sales Manager">
+              </div>
+
               <div class="form-group mt-3">
-                <label><i class="fa-solid fa-bullseye"></i> Key Job Requirements & Skills Needed</label>
+                <label><i class="fa-solid fa-bullseye"></i> Key Skills & Core Competencies</label>
                 <div class="input-icon-wrapper">
                   <i class="fa-solid fa-tags input-icon"></i>
-                  <input type="text" id="pRegSkills" class="form-control ps-icon" placeholder="e.g. React, Node.js, Python, AWS, System Design" value="React, Node.js, Python, PostgreSQL, REST APIs">
+                  <input type="text" id="pRegSkills" class="form-control ps-icon" placeholder="e.g. Financial Modeling, Excel, Communication, Project Management" value="JavaScript, React, Node.js, SQL, REST APIs, Git">
                 </div>
                 <small class="text-dim" style="font-size: 0.76rem; display: block; margin-top: 4px;">
-                  ✨ AI will calibrate ATS scoring, interview questions, and resume audits against these requirements.
+                  ✨ AI will automatically customize your Mock Interviews, ATS Resume Scoring, and Resume Builder for your chosen role, industry, and experience level.
                 </small>
               </div>
 
@@ -601,44 +611,90 @@
         <div class="page-header">
           <div>
             <h1 class="page-title">AI Mock Interview Simulator</h1>
-            <p class="page-subtitle">Practice interactive tech & behavioral interview rounds with real-time AI evaluation & STAR feedback.</p>
+            <p class="page-subtitle">Practice role-specific, industry-tailored &amp; behavioral interview rounds calibrated to your career profile and experience level.</p>
           </div>
           <div class="badge badge-purple"><i class="fa-solid fa-brain"></i> Real AI Interview Coach</div>
         </div>
 
         <div class="interview-container">
           <div class="card glass-card interview-setup" id="interviewSetupCard">
-            <h3><i class="fa-solid fa-sliders"></i> Configure Interview Session</h3>
+            <div class="d-flex justify-content-between align-items-center" style="flex-wrap: wrap; gap: 10px;">
+              <h3><i class="fa-solid fa-sliders"></i> Configure Interview Session</h3>
+              <button type="button" class="btn btn-outline btn-xs" id="syncInterviewProfileBtn" onclick="syncInterviewWithUserProfile()" title="Reset dropdowns to your account details">
+                <i class="fa-solid fa-rotate"></i> Reset to My Profile
+              </button>
+            </div>
+
+            <!-- Personalized Calibration Banner -->
+            <div class="interview-profile-banner mt-3" id="interviewProfileBanner">
+              <div class="profile-banner-icon"><i class="fa-solid fa-user-check"></i></div>
+              <div class="profile-banner-text">
+                <strong id="interviewProfileSummary">Calibrated to your profile</strong>
+                <p id="interviewProfileSub">Questions, round types, and STAR feedback automatically adapt to your industry, role, experience level, and skills.</p>
+              </div>
+            </div>
+
             <div class="form-row mt-3">
               <div class="form-group">
-                <label>Job Role Focus</label>
+                <label><i class="fa-solid fa-building"></i> Target Industry</label>
+                <select id="interviewIndustrySelect" class="form-select">
+                  <option value="Technology & Software">Technology & Software</option>
+                  <option value="Finance, Banking & Accounting">Finance, Banking & Accounting</option>
+                  <option value="Marketing, Sales & Media">Marketing, Sales & Media</option>
+                  <option value="Business, Management & Operations">Business, Management & Operations</option>
+                  <option value="Human Resources (HR) & Recruitment">Human Resources (HR) & Recruitment</option>
+                  <option value="Healthcare, Medical & Pharmacy">Healthcare, Medical & Pharmacy</option>
+                  <option value="Core Engineering & Manufacturing">Core Engineering & Manufacturing</option>
+                  <option value="Education, Teaching & Training">Education, Teaching & Training</option>
+                  <option value="Legal, Law & Government">Legal, Law & Government</option>
+                  <option value="Hospitality, Retail & Customer Service">Hospitality, Retail & Customer Service</option>
+                  <option value="__custom__">Other / Custom Industry...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label><i class="fa-solid fa-briefcase"></i> Job Role Focus</label>
                 <select id="interviewRoleSelect" class="form-select">
-                  <option value="Full Stack Developer">Full Stack Software Engineer</option>
-                  <option value="Backend Developer">Backend (Node.js/Python) Engineer</option>
-                  <option value="Frontend Developer">Frontend (React/Next.js) Specialist</option>
-                  <option value="Data Scientist / AI Engineer">Data Scientist / AI Engineer</option>
-                  <option value="DevOps / Cloud Engineer">DevOps & Cloud Engineer</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>Round Type</label>
-                <select id="interviewRoundSelect" class="form-select">
-                  <option value="Technical Core & System Architecture">Technical Core & System Architecture</option>
-                  <option value="Behavioral (STAR Method)">Behavioral & Leadership (STAR Method)</option>
-                  <option value="HR & Culture Fit">HR & Career Goals</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>Difficulty Level</label>
-                <select id="interviewDiffSelect" class="form-select">
-                  <option value="Mid-Level">Mid-Level (3+ yrs exp)</option>
-                  <option value="Senior Lead">Senior / Lead Architect</option>
-                  <option value="Entry Level">Entry / Junior Engineer</option>
+                  <option value="Full Stack Software Engineer">Full Stack Software Engineer</option>
                 </select>
               </div>
             </div>
+
+            <div class="form-row mt-3 hidden" id="interviewCustomFieldsRow">
+              <div class="form-group hidden" id="interviewCustomIndustryWrap">
+                <label><i class="fa-solid fa-pen"></i> Custom Industry</label>
+                <input type="text" id="interviewCustomIndustryInput" class="form-control" placeholder="e.g. Agriculture, Aviation, Architecture">
+              </div>
+              <div class="form-group hidden" id="interviewCustomRoleWrap">
+                <label><i class="fa-solid fa-user-tie"></i> Custom Job Role</label>
+                <input type="text" id="interviewCustomRoleInput" class="form-control" placeholder="e.g. Chartered Accountant, Civil Site Engineer">
+              </div>
+            </div>
+
+            <div class="form-row mt-3">
+              <div class="form-group">
+                <label><i class="fa-solid fa-list-check"></i> Round Type</label>
+                <select id="interviewRoundSelect" class="form-select">
+                  <option value="Technical Core & System Architecture">Technical Core & System Architecture</option>
+                  <option value="Behavioral & Leadership (STAR Method)">Behavioral & Leadership (STAR Method)</option>
+                  <option value="HR & Career Goals">HR & Career Goals</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label><i class="fa-solid fa-layer-group"></i> Experience / Difficulty Level</label>
+                <select id="interviewDiffSelect" class="form-select">
+                  <option value="Student / Intern">Student / Intern</option>
+                  <option value="Fresher / Entry-Level (0-1 yrs)">Fresher / Entry (0-1 yr)</option>
+                  <option value="Junior (1-3 yrs)">Junior (1-3 yrs)</option>
+                  <option value="Mid-Level (3-5 yrs)" selected>Mid-Level (3-5 yrs)</option>
+                  <option value="Senior (5-8 yrs)">Senior (5-8 yrs)</option>
+                  <option value="Lead / Manager (8-12 yrs)">Lead / Manager (8-12 yrs)</option>
+                  <option value="Director / Executive (12+ yrs)">Director / Executive (12+ yrs)</option>
+                </select>
+              </div>
+            </div>
+
             <button class="btn btn-primary btn-lg mt-4" id="startInterviewBtn">
-              <i class="fa-solid fa-play"></i> Launch AI Interview Session
+              <i class="fa-solid fa-play"></i> Launch Personalized AI Interview Session
             </button>
           </div>
 
@@ -650,11 +706,16 @@
                   <span class="pulse-ring"></span>
                 </div>
                 <div>
-                  <h4>AI Interviewer (Alex)</h4>
-                  <span class="role-badge" id="activeRoleBadge">Full Stack Engineer Round</span>
+                  <h4 id="interviewerPersonaName">AI Interviewer (Alex)</h4>
+                  <span class="role-badge" id="activeRoleBadge">Personalized Interview Round</span>
                 </div>
-                <div class="session-timer ms-auto">
-                  <i class="fa-solid fa-clock"></i> <span id="sessionTime">Live Session</span>
+                <div class="d-flex align-items-center ms-auto" style="gap: 10px;">
+                  <div class="session-timer">
+                    <i class="fa-solid fa-clock"></i> <span id="sessionTime">Live Session</span>
+                  </div>
+                  <button type="button" class="btn btn-outline btn-xs" id="backToInterviewSetupBtn" title="Change Role / Industry / Round">
+                    <i class="fa-solid fa-sliders"></i> Change Setup
+                  </button>
                 </div>
               </div>
 
@@ -663,9 +724,9 @@
                   <span class="q-label" id="qNumberLabel">Question 1 of 3</span>
                   <button class="btn btn-secondary btn-xs" id="genNewAiQuestionBtn" title="Generate New AI Question"><i class="fa-solid fa-arrows-rotate"></i> Generate New Question</button>
                 </div>
-                <h3 id="currentQuestionText">"Can you walk me through a complex architectural challenge you faced when building a Node.js microservice backend, and how you handled high concurrency?"</h3>
+                <h3 id="currentQuestionText">"Preparing your personalized interview question..."</h3>
                 <div class="q-hints mt-2">
-                  <span class="hint-tag" id="qHintTag"><i class="fa-solid fa-tag"></i> Key Focus: Bottlenecks, Caching, Event Loop</span>
+                  <span class="hint-tag" id="qHintTag"><i class="fa-solid fa-tag"></i> Key Focus: Role Mastery, Real-World Impact, STAR Structure</span>
                 </div>
               </div>
 

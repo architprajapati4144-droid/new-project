@@ -130,10 +130,16 @@ class AIQuestionGenRequest(BaseModel):
     round_type: str
     difficulty: str
     question_index: int
+    industry: Optional[str] = "General"
+    skills: Optional[str] = ""
+    previous_questions: Optional[List[str]] = []
 
 class AIAnswerEvaluateRequest(BaseModel):
     question: str
     candidate_answer: str
+    role: Optional[str] = "Candidate"
+    industry: Optional[str] = "General"
+    difficulty: Optional[str] = "Mid-Level"
 
 class AIEnhanceSummaryRequest(BaseModel):
     role: str
@@ -456,32 +462,105 @@ Return JSON format ONLY:
 
 @app.post("/api/ai/interview-question")
 def ai_interview_question(req: AIQuestionGenRequest):
-    system_instruction = f"You are a Senior Tech Lead conducting a job interview for a {req.role}."
-    prompt = f"Generate 1 realistic, challenging interview question for a {req.role} candidates during a {req.round_type} round at a {req.difficulty} level. Return ONLY the question text inside quotes. No extra explanations."
-    
-    raw_reply = call_gemini(prompt, system_instruction)
-    return {"question": raw_reply.strip().replace('"', '')}
+    industry = (req.industry or "General").strip()
+    skills = (req.skills or "").strip()
+    prev_list = req.previous_questions or []
+    avoid_clause = ""
+    if prev_list:
+        joined_prev = "\n".join([f"- {q}" for q in prev_list[-5:]])
+        avoid_clause = f"\nDo NOT repeat or closely duplicate any of these already-asked questions:\n{joined_prev}\n"
+
+    system_instruction = (
+        f"You are a Senior Hiring Manager and subject-matter interviewer in the {industry} industry "
+        f"interviewing a candidate for the role of {req.role}. Respond in strict JSON only."
+    )
+    prompt = f"""
+Generate 1 realistic, domain-authentic interview question tailored specifically to this candidate profile:
+- Target Job Role: {req.role}
+- Target Industry: {industry}
+- Experience / Difficulty Level: {req.difficulty}
+- Interview Round Type: {req.round_type}
+- Candidate Core Skills / Focus Areas: {skills or "Standard competencies for this role"}
+- Question Number in Round: {req.question_index + 1} of 3
+{avoid_clause}
+Make sure the question strictly matches the {industry} domain and {req.role} profession (do NOT ask software/coding questions if the role is non-technical). Calibrate complexity accurately for a {req.difficulty} candidate.
+
+Return strict JSON ONLY matching this structure:
+{{
+  "question": "The interview question text here",
+  "focus_hint": "3 short key evaluation concepts separated by commas (e.g. Risk Assessment, Regulatory Compliance, Stakeholder Communication)"
+}}
+"""
+    try:
+        raw_reply = call_gemini(prompt, system_instruction)
+        parsed = parse_json_response(raw_reply)
+        if isinstance(parsed, dict) and parsed.get("question"):
+            return {
+                "question": str(parsed["question"]).strip().strip('"'),
+                "focus_hint": str(parsed.get("focus_hint") or f"{req.role}, {industry}, STAR Structure").strip()
+            }
+        return {
+            "question": raw_reply.strip().strip('"'),
+            "focus_hint": f"{req.role}, {industry}, Practical Impact"
+        }
+    except Exception as e:
+        print(f"Notice: Interview question fallback engaged: {e}")
+        skill_hint = skills.split(",")[0].strip() if skills else req.role
+        fallbacks = [
+            f"Walk me through a challenging project or situation you handled as a {req.role} in the {industry} sector, and explain how you applied {skill_hint} to achieve measurable results.",
+            f"As a {req.difficulty} {req.role}, how do you prioritize competing deadlines while maintaining high quality and compliance standards in {industry}?",
+            f"Describe a time you had to resolve a difficult stakeholder, client, or team disagreement in your work as a {req.role}. What approach did you take and what was the outcome?"
+        ]
+        return {
+            "question": fallbacks[req.question_index % len(fallbacks)],
+            "focus_hint": f"{skill_hint}, Problem Solving, Measurable Outcomes"
+        }
 
 @app.post("/api/ai/evaluate-answer")
 def ai_evaluate_answer(req: AIAnswerEvaluateRequest):
-    system_instruction = "You are an Executive Tech Recruiter giving STAR feedback. Respond in strict JSON only."
+    role = (req.role or "Candidate").strip()
+    industry = (req.industry or "General").strip()
+    difficulty = (req.difficulty or "Mid-Level").strip()
+
+    system_instruction = (
+        f"You are a Senior Hiring Manager and Career Coach in the {industry} industry evaluating a "
+        f"{difficulty} {role} candidate using the STAR method. Respond in strict JSON only."
+    )
     prompt = f"""
-Question: \"{req.question}\"
+Evaluate this candidate's interview response fairly for a {difficulty} {role} in the {industry} industry.
+
+Interview Question: \"{req.question}\"
 Candidate Answer: \"{req.candidate_answer}\"
 
-Evaluate this response and return JSON format ONLY:
+Be honest and objective with the score (e.g. a very brief/vague answer should score 4.0-6.0/10; a solid structured STAR answer with domain specifics and measurable impact should score 7.5-9.5/10). Ensure strengths, missed points, and model_answer are 100% specific to the {role} role and {industry} domain.
+
+Return strict JSON ONLY:
 {{
-  "score": "8.5/10",
-  "strengths": ["Strength 1", "Strength 2"],
-  "missed": ["Point missed 1", "Point missed 2"],
-  "model_answer": "Model STAR response for reference..."
+  "score": "8.0/10",
+  "strengths": ["Specific strength 1", "Specific strength 2"],
+  "missed": ["Specific concept or metric missed 1", "Specific improvement 2"],
+  "model_answer": "A strong model STAR response tailored to a {difficulty} {role} in {industry}..."
 }}
 """
-    raw_reply = call_gemini(prompt, system_instruction)
     try:
+        raw_reply = call_gemini(prompt, system_instruction)
         return parse_json_response(raw_reply)
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"Failed to parse AI feedback: {str(e)}")
+        print(f"Notice: Evaluate answer fallback engaged: {e}")
+        word_count = len((req.candidate_answer or "").split())
+        score = "8.0/10" if word_count >= 45 else "6.5/10" if word_count >= 20 else "5.0/10"
+        return {
+            "score": score,
+            "strengths": [
+                f"Addressed the {role} interview prompt directly.",
+                "Demonstrated relevant awareness of the scenario."
+            ],
+            "missed": [
+                "Include concrete measurable results (%, time saved, revenue/quality impact).",
+                f"Explicitly structure your response using Situation, Task, Action, Result (STAR) tailored to {industry}."
+            ],
+            "model_answer": f"In my role as a {role} in {industry} (Situation), I was responsible for improving a critical workflow under tight deadlines (Task). I analyzed root bottlenecks, coordinated with key stakeholders, and executed a structured plan (Action), resulting in a 25% measurable improvement in outcomes (Result)."
+        }
 
 @app.post("/api/ai/enhance-summary")
 def ai_enhance_summary(req: AIEnhanceSummaryRequest):
@@ -492,7 +571,7 @@ def ai_enhance_summary(req: AIEnhanceSummaryRequest):
         enhanced = call_gemini(prompt, system_instruction)
         return {"enhanced_summary": enhanced.strip()}
     except Exception:
-        return {"enhanced_summary": f"High-impact {req.role} with proven expertise engineering resilient distributed systems, driving frontend performance optimizations, and scaling cloud-native microservices."}
+        return {"enhanced_summary": f"Results-driven {req.role} with proven expertise delivering high-impact initiatives, optimizing core workflows, and collaborating with cross-functional stakeholders to achieve measurable organizational goals."}
 
 @app.post("/api/ai/enhance-bullet")
 def ai_enhance_bullet(req: AIEnhanceBulletRequest):

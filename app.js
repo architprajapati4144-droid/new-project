@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initNavigation();
   initAnalyzerTabs();
   initDropZone();
+  initRegistrationCareerSelectors();
   initMockInterview();
   initResumeBuilder();
   initAuth();
@@ -108,6 +109,284 @@ async function checkPythonBackendStatus() {
 }
 
 /* --------------------------------------------------------------------------
+   UNIVERSAL MULTI-INDUSTRY CAREER CATALOG (TECH + NON-TECH + CUSTOM)
+   -------------------------------------------------------------------------- */
+const CAREER_CATALOG = {
+  "Technology & Software": {
+    persona: "Senior Engineering Hiring Lead",
+    rounds: [
+      "Technical Core & System Architecture",
+      "Problem Solving & Practical Coding / Debugging",
+      "Behavioral & Leadership (STAR Method)",
+      "HR & Career Goals"
+    ],
+    roles: [
+      { title: "Full Stack Software Engineer", skills: "JavaScript, TypeScript, React, Node.js, SQL, REST APIs, Git" },
+      { title: "Backend Developer", skills: "Python, Node.js, Java, PostgreSQL, REST APIs, System Design, Docker" },
+      { title: "Frontend Developer", skills: "HTML5, CSS3, JavaScript, TypeScript, React, Next.js, UI/UX" },
+      { title: "Mobile App Developer (Android / iOS / Flutter)", skills: "Flutter, Kotlin, Swift, React Native, REST APIs, Firebase" },
+      { title: "Data Scientist / AI & ML Engineer", skills: "Python, Machine Learning, Deep Learning, SQL, Pandas, PyTorch, Statistics" },
+      { title: "Data Analyst / Business Intelligence Analyst", skills: "SQL, Excel, Power BI, Tableau, Python, Data Visualization" },
+      { title: "DevOps & Cloud Engineer", skills: "Docker, Kubernetes, AWS, CI/CD, Linux, Terraform, Monitoring" },
+      { title: "Cybersecurity Analyst", skills: "Network Security, SIEM, Penetration Testing, Incident Response, Risk Compliance" },
+      { title: "QA / Software Test Engineer", skills: "Selenium, Playwright, API Testing, Manual & Automation Testing, Jira" },
+      { title: "UI/UX & Product Designer", skills: "Figma, Wireframing, Prototyping, User Research, Design Systems" },
+      { title: "IT Support / System Administrator", skills: "Windows/Linux Admin, Networking, Active Directory, Cloud Support, Troubleshooting" }
+    ]
+  },
+  "Finance, Banking & Accounting": {
+    persona: "Finance & Accounting Director",
+    rounds: [
+      "Core Finance, Accounting & Valuation",
+      "Case Study & Risk / Compliance Scenarios",
+      "Behavioral & Client Advisory (STAR Method)",
+      "HR & Career Goals"
+    ],
+    roles: [
+      { title: "Chartered Accountant (CA) / Senior Accountant", skills: "Financial Reporting, Tally/SAP, GST, Direct & Indirect Tax, Auditing, IFRS" },
+      { title: "Financial Analyst", skills: "Financial Modeling, Excel, Valuation, Budgeting, Forecasting, P&L Analysis" },
+      { title: "Investment Banker / Wealth Manager", skills: "M&A, Equity Research, Portfolio Management, Capital Markets, Client Advisory" },
+      { title: "Auditor / Tax Consultant", skills: "Internal Audit, Statutory Compliance, Tax Planning, Risk Controls, SOX" },
+      { title: "Banking Relationship Manager", skills: "Retail & Corporate Banking, Credit Appraisal, KYC/AML, Cross-Selling, CRM" },
+      { title: "Insurance Advisor / Underwriter", skills: "Risk Assessment, Policy Underwriting, Claims Processing, Regulatory Compliance" }
+    ]
+  },
+  "Marketing, Sales & Media": {
+    persona: "VP of Marketing & Growth",
+    rounds: [
+      "Domain Strategy & Campaign / Sales Pitch",
+      "Case Study, ROI Metrics & Growth Scenarios",
+      "Behavioral & Persuasion (STAR Method)",
+      "HR & Career Goals"
+    ],
+    roles: [
+      { title: "Digital Marketing Specialist", skills: "SEO, Google Ads, Meta Ads, Google Analytics, Content Marketing, Email Campaigns" },
+      { title: "Marketing Manager / Brand Strategist", skills: "Brand Positioning, Campaign Strategy, Market Research, Go-To-Market, ROI Analysis" },
+      { title: "Sales Executive / Business Development Manager", skills: "B2B/B2C Sales, Lead Generation, Negotiation, CRM, Pipeline Management" },
+      { title: "Content Writer / Copywriter", skills: "Copywriting, SEO Writing, Brand Voice, Editorial Planning, Research" },
+      { title: "Graphic Designer / Video Editor", skills: "Photoshop, Illustrator, Premiere Pro, After Effects, Canva, Visual Branding" },
+      { title: "PR & Corporate Communications Specialist", skills: "Media Relations, Press Releases, Crisis Communications, Event Management" }
+    ]
+  },
+  "Business, Management & Operations": {
+    persona: "Senior Operations & Strategy Director",
+    rounds: [
+      "Business Strategy & Operational Case Study",
+      "Stakeholder Management & Execution Scenarios",
+      "Behavioral & Leadership (STAR Method)",
+      "HR & Career Goals"
+    ],
+    roles: [
+      { title: "Business Analyst", skills: "Requirements Gathering, Stakeholder Management, SQL, Excel, Process Mapping, Agile" },
+      { title: "Project Manager / Product Manager", skills: "Project Planning, Agile/Scrum, Roadmapping, Budgeting, Risk Management" },
+      { title: "Operations Manager", skills: "Process Optimization, Lean Six Sigma, KPI Tracking, Vendor Management, SOPs" },
+      { title: "Management Consultant", skills: "Strategy Frameworks, Market Sizing, Financial Analysis, Executive Presentations" },
+      { title: "Supply Chain & Logistics Manager", skills: "Inventory Control, Procurement, ERP/SAP, Warehouse Operations, Demand Forecasting" },
+      { title: "Administrative / Executive Assistant", skills: "Executive Coordination, MS Office, Scheduling, Documentation, Communication" }
+    ]
+  },
+  "Human Resources (HR) & Recruitment": {
+    persona: "Senior HR Business Partner",
+    rounds: [
+      "Core HR Policies, Recruitment & Compliance",
+      "Employee Relations & Conflict Resolution Scenarios",
+      "Behavioral & Leadership (STAR Method)",
+      "HR & Career Goals"
+    ],
+    roles: [
+      { title: "HR Generalist / HR Manager", skills: "Employee Relations, HR Policies, Performance Management, Labor Law, HRIS" },
+      { title: "Talent Acquisition / Recruiter", skills: "Candidate Sourcing, Structured Interviewing, ATS, Employer Branding, Negotiation" },
+      { title: "Learning & Development Specialist", skills: "Training Design, Onboarding, Workshop Facilitation, LMS, Skill Gap Analysis" },
+      { title: "Payroll & Compensation Specialist", skills: "Payroll Processing, Statutory Compliance, Benefits Administration, Excel" }
+    ]
+  },
+  "Healthcare, Medical & Pharmacy": {
+    persona: "Clinical Hiring Panel Lead",
+    rounds: [
+      "Clinical Knowledge & Core Medical Standards",
+      "Patient Care & Emergency Case Scenarios",
+      "Behavioral, Empathy & Ethics (STAR Method)",
+      "HR & Career Goals"
+    ],
+    roles: [
+      { title: "Medical Doctor / Resident Physician", skills: "Clinical Diagnosis, Patient Care, Treatment Planning, EMR, Medical Ethics" },
+      { title: "Registered Nurse / Healthcare Specialist", skills: "Patient Monitoring, Medication Administration, Emergency Care, Triage, Documentation" },
+      { title: "Pharmacist / Clinical Research Associate", skills: "Pharmacology, Drug Dispensing, Clinical Trials, GCP, Patient Counseling" },
+      { title: "Healthcare Administrator / Medical Coder", skills: "ICD-10/CPT Coding, Hospital Operations, HIPAA Compliance, Billing, EHR" },
+      { title: "Physiotherapist / Lab Technician", skills: "Rehabilitation Therapy, Diagnostic Testing, Equipment Calibration, Patient Safety" }
+    ]
+  },
+  "Core Engineering & Manufacturing": {
+    persona: "Chief Engineering & Plant Manager",
+    rounds: [
+      "Core Engineering Principles & Technical Design",
+      "Practical Site / Plant Problem-Solving Scenarios",
+      "Behavioral & Safety Leadership (STAR Method)",
+      "HR & Career Goals"
+    ],
+    roles: [
+      { title: "Mechanical Engineer", skills: "AutoCAD, SolidWorks, Thermodynamics, CAD/CAM, Manufacturing Processes, GD&T" },
+      { title: "Civil & Structural Engineer", skills: "AutoCAD, STAAD.Pro, Structural Design, Site Supervision, Estimation, Revit" },
+      { title: "Electrical / Electronics Engineer", skills: "Circuit Design, PLC/SCADA, Power Systems, MATLAB, Embedded Systems, PCB" },
+      { title: "Chemical / Industrial Engineer", skills: "Process Engineering, Quality Control, Six Sigma, Safety Standards, Plant Ops" },
+      { title: "Automobile / Production Engineer", skills: "Production Planning, Lean Manufacturing, Quality Assurance, Kaizen, CNC" },
+      { title: "Architect / Interior Designer", skills: "AutoCAD, Revit, SketchUp, 3D Rendering, Building Codes, Space Planning" }
+    ]
+  },
+  "Education, Teaching & Training": {
+    persona: "Academic Dean & Hiring Panel",
+    rounds: [
+      "Subject Mastery & Pedagogy / Lesson Design",
+      "Classroom Management & Student Scenarios",
+      "Behavioral & Communication (STAR Method)",
+      "HR & Career Goals"
+    ],
+    roles: [
+      { title: "School Teacher / Subject Educator", skills: "Lesson Planning, Classroom Management, Curriculum Design, Student Assessment" },
+      { title: "University Professor / Lecturer", skills: "Academic Research, Course Delivery, Student Mentoring, Grant Writing, Publishing" },
+      { title: "Academic Counselor / Instructional Designer", skills: "Student Guidance, E-Learning Design, Curriculum Mapping, Communication" },
+      { title: "Corporate Trainer / EdTech Specialist", skills: "Workshop Delivery, Adult Learning, Training Evaluation, Presentation Skills" }
+    ]
+  },
+  "Legal, Law & Government": {
+    persona: "Managing Legal Partner & Panel Lead",
+    rounds: [
+      "Core Legal Frameworks, Drafting & Compliance",
+      "Case Analysis & Ethical Dilemma Scenarios",
+      "Behavioral & Advocacy (STAR Method)",
+      "HR & Career Goals"
+    ],
+    roles: [
+      { title: "Corporate Lawyer / Legal Advisor", skills: "Contract Drafting, Corporate Law, Legal Research, Negotiation, Due Diligence" },
+      { title: "Paralegal / Compliance Officer", skills: "Regulatory Compliance, Legal Documentation, Case Filing, Risk Auditing" },
+      { title: "Civil Services / Public Administration Officer", skills: "Public Policy, Governance, Administrative Law, Ethics, Crisis Management" }
+    ]
+  },
+  "Hospitality, Retail & Customer Service": {
+    persona: "Regional Operations & Service Manager",
+    rounds: [
+      "Service Excellence & Operations Management",
+      "Customer Escalation & Problem-Solving Scenarios",
+      "Behavioral & Teamwork (STAR Method)",
+      "HR & Career Goals"
+    ],
+    roles: [
+      { title: "Customer Support / Client Success Manager", skills: "CRM, Conflict Resolution, SLA Management, Client Retention, Communication" },
+      { title: "Hotel / Hospitality Manager", skills: "Guest Relations, Front Office Ops, F&B Management, Staff Scheduling, Budgeting" },
+      { title: "Retail Store Manager / Merchandiser", skills: "Store Operations, Visual Merchandising, Inventory, Sales Targets, Team Leadership" },
+      { title: "Aviation / Travel & Tourism Specialist", skills: "Itinerary Planning, Ticketing/GDS, Passenger Safety, Customer Hospitality" }
+    ]
+  }
+};
+
+function normalizeIndustryKey(rawIndustry) {
+  if (!rawIndustry) return "Technology & Software";
+  const str = String(rawIndustry).trim();
+  if (CAREER_CATALOG[str]) return str;
+  const low = str.toLowerCase();
+  if (/tech|software|it\b|ai|machine learning|cloud|cyber/.test(low)) return "Technology & Software";
+  if (/financ|bank|account|fintech|audit|tax|insur/.test(low)) return "Finance, Banking & Accounting";
+  if (/market|sales|media|advertis|pr\b|brand|content/.test(low)) return "Marketing, Sales & Media";
+  if (/business|consult|operat|manage|supply|logist|e-commerce|enterprise/.test(low)) return "Business, Management & Operations";
+  if (/human resource|\bhr\b|recruit|talent/.test(low)) return "Human Resources (HR) & Recruitment";
+  if (/health|medic|pharma|nurs|hospit(?!ality)|clinic|doctor/.test(low)) return "Healthcare, Medical & Pharmacy";
+  if (/mechanic|civil|electric|manufactur|automob|architect|core eng|chemical|industrial/.test(low)) return "Core Engineering & Manufacturing";
+  if (/educat|teach|academ|universit|school|edtech|train/.test(low)) return "Education, Teaching & Training";
+  if (/legal|law|gov|public admin|compliance/.test(low)) return "Legal, Law & Government";
+  if (/hospitality|hotel|retail|customer|travel|aviation|tourism/.test(low)) return "Hospitality, Retail & Customer Service";
+  return "__custom__";
+}
+
+function normalizeExperienceLevel(rawExp) {
+  if (!rawExp) return "Mid-Level (3-5 yrs)";
+  const low = String(rawExp).toLowerCase();
+  if (/intern|student/.test(low)) return "Student / Intern";
+  if (/fresher|entry|0-1/.test(low)) return "Fresher / Entry-Level (0-1 yrs)";
+  if (/junior|1-2|1-3/.test(low)) return "Junior (1-3 yrs)";
+  if (/director|exec|12\+/.test(low)) return "Director / Executive (12+ yrs)";
+  if (/lead|staff|manager|8\+/.test(low)) return "Lead / Manager (8-12 yrs)";
+  if (/senior|5-8/.test(low)) return "Senior (5-8 yrs)";
+  return "Mid-Level (3-5 yrs)";
+}
+
+function getDefaultRoundsForIndustry(industryKey) {
+  if (CAREER_CATALOG[industryKey]) {
+    return CAREER_CATALOG[industryKey].rounds;
+  }
+  return [
+    "Core Domain & Role Knowledge",
+    "Practical Case Study & Scenario Solving",
+    "Behavioral & Leadership (STAR Method)",
+    "HR & Career Goals"
+  ];
+}
+
+function populateRegRolesForIndustry(industryKey) {
+  const roleSelect = document.getElementById('pRegRole');
+  const customIndWrap = document.getElementById('pRegCustomIndustryWrap');
+  const customRoleWrap = document.getElementById('pRegCustomRoleWrap');
+  const skillsInput = document.getElementById('pRegSkills');
+  if (!roleSelect) return;
+
+  if (industryKey === '__custom__') {
+    if (customIndWrap) customIndWrap.classList.remove('hidden');
+    roleSelect.innerHTML = `<option value="__custom__">Enter Custom Job Role...</option>`;
+    if (customRoleWrap) customRoleWrap.classList.remove('hidden');
+    if (skillsInput && !skillsInput.dataset.userEdited) {
+      skillsInput.value = '';
+      skillsInput.placeholder = 'Enter key skills for your profession (comma separated)';
+    }
+    return;
+  }
+
+  if (customIndWrap) customIndWrap.classList.add('hidden');
+  const group = CAREER_CATALOG[industryKey] || CAREER_CATALOG["Technology & Software"];
+  roleSelect.innerHTML =
+    group.roles.map(r => `<option value="${escapeHtml(r.title)}">${escapeHtml(r.title)}</option>`).join('') +
+    `<option value="__custom__">Other / Custom Job Role...</option>`;
+
+  if (customRoleWrap) customRoleWrap.classList.add('hidden');
+
+  // Auto-populate matching skills if user hasn't manually edited the skills field
+  if (skillsInput && !skillsInput.dataset.userEdited && group.roles.length > 0) {
+    skillsInput.value = group.roles[0].skills;
+  }
+}
+
+function initRegistrationCareerSelectors() {
+  const indSelect = document.getElementById('pRegIndustry');
+  const roleSelect = document.getElementById('pRegRole');
+  const customRoleWrap = document.getElementById('pRegCustomRoleWrap');
+  const skillsInput = document.getElementById('pRegSkills');
+  if (!indSelect || !roleSelect) return;
+
+  if (skillsInput) {
+    skillsInput.addEventListener('input', () => {
+      skillsInput.dataset.userEdited = 'true';
+    });
+  }
+
+  indSelect.addEventListener('change', () => {
+    populateRegRolesForIndustry(indSelect.value);
+  });
+
+  roleSelect.addEventListener('change', () => {
+    if (roleSelect.value === '__custom__') {
+      if (customRoleWrap) customRoleWrap.classList.remove('hidden');
+    } else {
+      if (customRoleWrap) customRoleWrap.classList.add('hidden');
+      const group = CAREER_CATALOG[indSelect.value];
+      if (group && skillsInput && !skillsInput.dataset.userEdited) {
+        const found = group.roles.find(r => r.title === roleSelect.value);
+        if (found) skillsInput.value = found.skills;
+      }
+    }
+  });
+
+  populateRegRolesForIndustry(indSelect.value || "Technology & Software");
+}
+
+/* --------------------------------------------------------------------------
    USER AUTHENTICATION & DATABASE PERSISTENCE ENGINE
    -------------------------------------------------------------------------- */
 let currentUser = null;
@@ -117,33 +396,39 @@ const DEFAULT_USERS = {
     id: 1,
     email: 'archit@example.com',
     name: 'Archit Prajapati',
-    role: 'Senior Full Stack Engineer',
+    role: 'Full Stack Software Engineer',
+    target_industry: 'Technology & Software',
+    experience_level: 'Senior (5-8 yrs)',
+    target_skills: 'JavaScript, TypeScript, React, Node.js, PostgreSQL, Docker',
     initials: 'AP',
     audits: [
-      { id: 101, name: 'Archit_Prajapati_FullStack_2026.pdf', role: 'Senior Full Stack Engineer', score: 88, time: '2 hours ago' },
-      { id: 102, name: 'Backend_Node_Developer_v2.docx', role: 'Node.js Backend Lead', score: 74, time: 'Yesterday' }
+      { id: 101, name: 'Archit_Prajapati_FullStack_2026.pdf', role: 'Full Stack Software Engineer', score: 88, time: '2 hours ago' },
+      { id: 102, name: 'Backend_Node_Developer_v2.docx', role: 'Backend Developer', score: 74, time: 'Yesterday' }
     ],
     jd_matches: [
-      { job_title: 'Senior Full Stack Engineer', match_percentage: 82, created_at: new Date().toISOString() }
+      { job_title: 'Full Stack Software Engineer', match_percentage: 82, created_at: new Date().toISOString() }
     ],
     interviews: [
-      { role_focus: 'Senior Full Stack Engineer', round_type: 'Technical', difficulty: 'Senior', overall_score: '8.8/10', created_at: new Date().toISOString() }
+      { role_focus: 'Full Stack Software Engineer', round_type: 'Technical Core & System Architecture', difficulty: 'Senior (5-8 yrs)', overall_score: '8.8/10', created_at: new Date().toISOString() }
     ]
   },
   'sarah@example.com': {
     id: 2,
     email: 'sarah@example.com',
     name: 'Sarah Jenkins',
-    role: 'Data Scientist / AI Specialist',
+    role: 'Data Scientist / AI & ML Engineer',
+    target_industry: 'Technology & Software',
+    experience_level: 'Mid-Level (3-5 yrs)',
+    target_skills: 'Python, Machine Learning, SQL, Pandas, PyTorch, Statistics',
     initials: 'SJ',
     audits: [
-      { id: 201, name: 'Sarah_Jenkins_DataScientist.pdf', role: 'Data Scientist / ML Engineer', score: 92, time: '1 day ago' }
+      { id: 201, name: 'Sarah_Jenkins_DataScientist.pdf', role: 'Data Scientist / AI & ML Engineer', score: 92, time: '1 day ago' }
     ],
     jd_matches: [
-      { job_title: 'Data Scientist / AI Specialist', match_percentage: 90, created_at: new Date().toISOString() }
+      { job_title: 'Data Scientist / AI & ML Engineer', match_percentage: 90, created_at: new Date().toISOString() }
     ],
     interviews: [
-      { role_focus: 'Data Scientist / AI Specialist', round_type: 'Technical', difficulty: 'Mid-Level', overall_score: '9.2/10', created_at: new Date().toISOString() }
+      { role_focus: 'Data Scientist / AI & ML Engineer', round_type: 'Technical Core & System Architecture', difficulty: 'Mid-Level (3-5 yrs)', overall_score: '9.2/10', created_at: new Date().toISOString() }
     ]
   }
 };
@@ -211,9 +496,26 @@ async function handlePageRegisterSubmit(e) {
   const name = document.getElementById('pRegName').value.trim();
   const email = document.getElementById('pRegEmail').value.trim().toLowerCase();
   const password = document.getElementById('pRegPassword').value;
-  const role = document.getElementById('pRegRole').value;
-  const expLevel = document.getElementById('pRegExpLevel')?.value || 'Mid-Level (2-5 yrs)';
-  const industry = document.getElementById('pRegIndustry')?.value || 'Tech & Software Products';
+
+  const indVal = document.getElementById('pRegIndustry')?.value || 'Technology & Software';
+  const customInd = document.getElementById('pRegCustomIndustry')?.value?.trim() || '';
+  const industry = (indVal === '__custom__') ? (customInd || 'General') : indVal;
+  if (indVal === '__custom__' && !customInd) {
+    alert('Please enter your Target Industry name.');
+    document.getElementById('pRegCustomIndustry')?.focus();
+    return;
+  }
+
+  const roleVal = document.getElementById('pRegRole')?.value || '';
+  const customRole = document.getElementById('pRegCustomRole')?.value?.trim() || '';
+  const role = (roleVal === '__custom__' || indVal === '__custom__') ? customRole : roleVal;
+  if (!role) {
+    alert('Please enter your Target Job Role.');
+    document.getElementById('pRegCustomRole')?.focus();
+    return;
+  }
+
+  const expLevel = document.getElementById('pRegExpLevel')?.value || 'Mid-Level (3-5 yrs)';
   const targetSkills = document.getElementById('pRegSkills')?.value.trim() || '';
   await registerWithCredentials(name, email, password, role, expLevel, industry, targetSkills);
 }
@@ -347,9 +649,16 @@ async function registerWithCredentials(name, email, password, role, experience_l
           jd_matches: [],
           interviews: []
         };
+        const usersDb = JSON.parse(localStorage.getItem('RESUMIND_USERS') || '{}');
+        usersDb[email] = currentUser;
+        localStorage.setItem('RESUMIND_USERS', JSON.stringify(usersDb));
         localStorage.setItem('RESUMIND_CURRENT_USER', email);
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Create Account & Save to Database';
+        }
         showAppPortal(true);
-        alert(`✨ Account created in SQLite DB! Welcome, ${name}. AI services calibrated for ${role}.`);
+        alert(`✨ Account created! Welcome, ${name}. AI Mock Interview & ATS tools are now calibrated for ${role} (${target_industry} • ${experience_level}).`);
         return;
       } else {
         const err = await res.json().catch(() => ({}));
@@ -429,7 +738,12 @@ function updateUserUI() {
   // Pre-calibrate tools to user's registered job requirements
   const resumeRoleTag = document.getElementById('resumeRoleTag');
   if (resumeRoleTag && currentUser.role) {
-    resumeRoleTag.innerText = `Target: ${currentUser.role} • ${currentUser.experience_level || 'Mid-Level'}`;
+    resumeRoleTag.innerText = `Target: ${currentUser.role} • ${currentUser.experience_level || 'Mid-Level (3-5 yrs)'}`;
+  }
+
+  // Calibrate AI Mock Interview Simulator directly to user's registered industry, role, experience & skills
+  if (typeof syncInterviewWithUserProfile === 'function') {
+    syncInterviewWithUserProfile();
   }
 
   const rbName = document.getElementById('rbFullName');
@@ -1450,30 +1764,201 @@ function analyzeResumeLocally(resumeText, fileName) {
 
 
 /* --------------------------------------------------------------------------
-   AI MOCK INTERVIEW SIMULATOR WITH REAL AI
+   AI MOCK INTERVIEW SIMULATOR WITH REAL AI (CALIBRATED TO USER PROFILE)
    -------------------------------------------------------------------------- */
 let currentQuestionIndex = 0;
-let activeRole = 'Full Stack Developer';
+let activeRole = 'Full Stack Software Engineer';
+let activeIndustry = 'Technology & Software';
+let activeDifficulty = 'Mid-Level (3-5 yrs)';
+let activeRound = 'Technical Core & System Architecture';
+let activeSkills = '';
+let askedQuestions = [];
 let currentRoundScores = [];
+
+function updateInterviewCustomFieldsVisibility() {
+  const indSelect = document.getElementById('interviewIndustrySelect');
+  const roleSelect = document.getElementById('interviewRoleSelect');
+  const customRow = document.getElementById('interviewCustomFieldsRow');
+  const customIndWrap = document.getElementById('interviewCustomIndustryWrap');
+  const customRoleWrap = document.getElementById('interviewCustomRoleWrap');
+  if (!indSelect || !roleSelect) return;
+
+  const isCustomInd = indSelect.value === '__custom__';
+  const isCustomRole = isCustomInd || roleSelect.value === '__custom__';
+
+  if (customIndWrap) customIndWrap.classList.toggle('hidden', !isCustomInd);
+  if (customRoleWrap) customRoleWrap.classList.toggle('hidden', !isCustomRole);
+  if (customRow) customRow.classList.toggle('hidden', !(isCustomInd || isCustomRole));
+}
+
+function populateInterviewRolesAndRounds(industryKey, preferredRole = '') {
+  const roleSelect = document.getElementById('interviewRoleSelect');
+  const roundSelect = document.getElementById('interviewRoundSelect');
+  const customRoleInput = document.getElementById('interviewCustomRoleInput');
+  if (!roleSelect || !roundSelect) return;
+
+  // Populate Rounds for the selected industry
+  const rounds = getDefaultRoundsForIndustry(industryKey);
+  roundSelect.innerHTML = rounds
+    .map(r => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`)
+    .join('');
+
+  // Populate Roles for the selected industry
+  if (industryKey === '__custom__') {
+    roleSelect.innerHTML = `<option value="__custom__">Enter Custom Job Role...</option>`;
+    if (customRoleInput && preferredRole) {
+      customRoleInput.value = preferredRole;
+    }
+    updateInterviewCustomFieldsVisibility();
+    return;
+  }
+
+  const group = CAREER_CATALOG[industryKey] || CAREER_CATALOG["Technology & Software"];
+  const options = group.roles.map(r => r.title);
+
+  // If user's registered role is custom or slightly differently worded, preserve it cleanly as an option
+  let matchedRole = '';
+  if (preferredRole) {
+    const prefLow = preferredRole.toLowerCase().trim();
+    matchedRole = options.find(o => o.toLowerCase() === prefLow)
+      || options.find(o => o.toLowerCase().includes(prefLow) || prefLow.includes(o.toLowerCase().split('(')[0].trim()))
+      || '';
+    if (!matchedRole) {
+      options.unshift(preferredRole);
+      matchedRole = preferredRole;
+    }
+  }
+
+  roleSelect.innerHTML =
+    options.map(title => `<option value="${escapeHtml(title)}">${escapeHtml(title)}</option>`).join('') +
+    `<option value="__custom__">Other / Custom Job Role...</option>`;
+
+  if (matchedRole) {
+    roleSelect.value = matchedRole;
+  }
+  updateInterviewCustomFieldsVisibility();
+}
+
+function syncInterviewWithUserProfile() {
+  const indSelect = document.getElementById('interviewIndustrySelect');
+  const diffSelect = document.getElementById('interviewDiffSelect');
+  const customIndInput = document.getElementById('interviewCustomIndustryInput');
+  const summaryEl = document.getElementById('interviewProfileSummary');
+  const subEl = document.getElementById('interviewProfileSub');
+
+  if (!indSelect) return;
+
+  const userRole = (currentUser && currentUser.role) ? currentUser.role.trim() : 'Full Stack Software Engineer';
+  const rawIndustry = (currentUser && currentUser.target_industry) ? currentUser.target_industry.trim() : 'Technology & Software';
+  const userExp = normalizeExperienceLevel(currentUser && currentUser.experience_level ? currentUser.experience_level : 'Mid-Level (3-5 yrs)');
+  const userSkills = (currentUser && currentUser.target_skills) ? currentUser.target_skills.trim() : '';
+
+  const normalizedInd = normalizeIndustryKey(rawIndustry);
+  indSelect.value = normalizedInd;
+  if (normalizedInd === '__custom__' && customIndInput) {
+    customIndInput.value = rawIndustry;
+  }
+
+  populateInterviewRolesAndRounds(normalizedInd, userRole);
+
+  if (diffSelect) {
+    diffSelect.value = userExp;
+  }
+
+  if (summaryEl) {
+    summaryEl.innerText = `Calibrated for your profile: ${userRole} • ${rawIndustry} • ${userExp}`;
+  }
+  if (subEl) {
+    subEl.innerText = userSkills
+      ? `Core Focus Skills: ${userSkills}`
+      : `Questions, interview rounds, and STAR evaluation adapt automatically to your ${rawIndustry} role and ${userExp} tier.`;
+  }
+
+  // Ensure setup card is shown cleanly when switching accounts
+  const setupCard = document.getElementById('interviewSetupCard');
+  const stage = document.getElementById('interviewStage');
+  const evalPanel = document.getElementById('evaluationPanel');
+  if (setupCard) setupCard.classList.remove('hidden');
+  if (stage) stage.classList.add('hidden');
+  if (evalPanel) evalPanel.classList.add('hidden');
+}
 
 function initMockInterview() {
   const startBtn = document.getElementById('startInterviewBtn');
   const submitAnswerBtn = document.getElementById('submitAnswerBtn');
   const nextQBtn = document.getElementById('nextQuestionBtn');
   const genNewQBtn = document.getElementById('genNewAiQuestionBtn');
+  const backBtn = document.getElementById('backToInterviewSetupBtn');
+  const indSelect = document.getElementById('interviewIndustrySelect');
+  const roleSelect = document.getElementById('interviewRoleSelect');
 
   if (!startBtn) return;
 
+  // Initialize default options immediately before login completes
+  populateInterviewRolesAndRounds(indSelect ? indSelect.value : 'Technology & Software');
+
+  if (indSelect) {
+    indSelect.addEventListener('change', () => {
+      populateInterviewRolesAndRounds(indSelect.value);
+    });
+  }
+
+  if (roleSelect) {
+    roleSelect.addEventListener('change', updateInterviewCustomFieldsVisibility);
+  }
+
+  if (backBtn) {
+    backBtn.addEventListener('click', () => {
+      document.getElementById('interviewStage').classList.add('hidden');
+      document.getElementById('evaluationPanel').classList.add('hidden');
+      document.getElementById('interviewSetupCard').classList.remove('hidden');
+    });
+  }
+
   startBtn.addEventListener('click', async () => {
-    activeRole = document.getElementById('interviewRoleSelect').value;
-    const round = document.getElementById('interviewRoundSelect').value;
+    const indVal = document.getElementById('interviewIndustrySelect')?.value || 'Technology & Software';
+    const customInd = document.getElementById('interviewCustomIndustryInput')?.value?.trim() || '';
+    activeIndustry = (indVal === '__custom__') ? (customInd || 'General') : indVal;
+
+    const roleVal = document.getElementById('interviewRoleSelect')?.value || '';
+    const customRole = document.getElementById('interviewCustomRoleInput')?.value?.trim() || '';
+    activeRole = (roleVal === '__custom__' || indVal === '__custom__') ? customRole : roleVal;
+
+    if (!activeRole) {
+      alert('Please select or enter a Job Role Focus before starting.');
+      document.getElementById('interviewCustomRoleInput')?.focus();
+      return;
+    }
+
+    activeRound = document.getElementById('interviewRoundSelect')?.value || 'Core Domain & Role Knowledge';
+    activeDifficulty = document.getElementById('interviewDiffSelect')?.value || 'Mid-Level (3-5 yrs)';
+
+    // Use user's saved skills if matching their role, else lookup catalog skills for selected role
+    const catalogGroup = CAREER_CATALOG[activeIndustry];
+    const catalogRoleObj = catalogGroup ? catalogGroup.roles.find(r => r.title === activeRole) : null;
+    if (currentUser && currentUser.target_skills && currentUser.role && currentUser.role.toLowerCase() === activeRole.toLowerCase()) {
+      activeSkills = currentUser.target_skills;
+    } else if (catalogRoleObj) {
+      activeSkills = catalogRoleObj.skills;
+    } else {
+      activeSkills = (currentUser && currentUser.target_skills) ? currentUser.target_skills : activeRole;
+    }
+
+    const personaTitle = catalogGroup ? catalogGroup.persona : `${activeIndustry} Senior Hiring Lead`;
+    const personaEl = document.getElementById('interviewerPersonaName');
+    if (personaEl) {
+      personaEl.innerText = `AI Interviewer (Alex) • ${personaTitle}`;
+    }
 
     document.getElementById('interviewSetupCard').classList.add('hidden');
     document.getElementById('interviewStage').classList.remove('hidden');
-    document.getElementById('activeRoleBadge').innerText = `${activeRole} • ${round}`;
+    document.getElementById('evaluationPanel').classList.add('hidden');
+    document.getElementById('candidateAnswerText').value = '';
+    document.getElementById('activeRoleBadge').innerText = `${activeRole} • ${activeIndustry} • ${activeDifficulty} • ${activeRound}`;
 
     currentQuestionIndex = 0;
     currentRoundScores = [];
+    askedQuestions = [];
     await generateAiQuestion();
   });
 
@@ -1503,11 +1988,11 @@ function initMockInterview() {
         avg = sum / currentRoundScores.length;
       }
       const overallStr = `${avg.toFixed(1)}/10`;
-      const round = document.getElementById('interviewRoundSelect').value;
-      const diff = document.getElementById('interviewDifficultySelect')?.value || 'Mid-Level';
-      
-      saveUserInterviewRecord(activeRole, round, diff, overallStr);
-      alert(`🎉 Mock Interview Round Completed! Overall Score: ${overallStr}`);
+      saveUserInterviewRecord(activeRole, activeRound, activeDifficulty, overallStr);
+      alert(`🎉 Mock Interview Round Completed for ${activeRole} (${activeIndustry})! Overall Score: ${overallStr}`);
+      document.getElementById('interviewStage').classList.add('hidden');
+      document.getElementById('evaluationPanel').classList.add('hidden');
+      document.getElementById('interviewSetupCard').classList.remove('hidden');
       switchTab('dashboard');
     }
   });
@@ -1516,22 +2001,28 @@ function initMockInterview() {
 async function generateAiQuestion() {
   const qText = document.getElementById('currentQuestionText');
   const qNum = document.getElementById('qNumberLabel');
-  qNum.innerText = `Question ${currentQuestionIndex + 1} of 3`;
+  const qHint = document.getElementById('qHintTag');
+  if (qNum) qNum.innerText = `Question ${currentQuestionIndex + 1} of 3`;
+
+  const primarySkill = (activeSkills || activeRole).split(',')[0].trim();
 
   if (isBackendOnline) {
-    qText.innerText = '"Generating tailored question with Real AI..."';
+    qText.innerText = `"Generating tailored ${activeRole} (${activeIndustry}) question with Real AI..."`;
+    if (qHint) {
+      qHint.innerHTML = `<i class="fa-solid fa-tag"></i> Key Focus: ${escapeHtml(activeIndustry)} • ${escapeHtml(activeDifficulty)}`;
+    }
     try {
-      const round = document.getElementById('interviewRoundSelect').value;
-      const diff = document.getElementById('interviewDifficultySelect')?.value || 'Mid-Level';
-
       const res = await fetch(`${API_BASE_URL}/api/ai/interview-question`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           role: activeRole,
-          round_type: round,
-          difficulty: diff,
-          question_index: currentQuestionIndex
+          industry: activeIndustry,
+          round_type: activeRound,
+          difficulty: activeDifficulty,
+          skills: activeSkills,
+          question_index: currentQuestionIndex,
+          previous_questions: askedQuestions
         })
       });
 
@@ -1541,23 +2032,40 @@ async function generateAiQuestion() {
       }
 
       const data = await res.json();
-      qText.innerText = data.question ? `"${data.question.trim()}"` : '"AI question failed to generate"';
-      return;
+      const questionStr = data.question ? data.question.trim() : '';
+      if (questionStr) {
+        qText.innerText = `"${questionStr}"`;
+        askedQuestions.push(questionStr);
+        if (qHint) {
+          const hintStr = data.focus_hint || `${primarySkill}, ${activeIndustry}, STAR Structure`;
+          qHint.innerHTML = `<i class="fa-solid fa-tag"></i> Key Focus: ${escapeHtml(hintStr)}`;
+        }
+        return;
+      }
     } catch (e) {
       console.warn("AI Question fallback:", e);
     }
   }
 
-  const demoQs = [
-    "Can you walk me through a complex architectural challenge you faced when building a microservice backend, and how you handled concurrency?",
-    "How do you manage state and prevent unnecessary re-renders in a large-scale React application?",
-    "Tell me about a time you had a technical disagreement with a peer and how you resolved it."
+  // Domain-tailored fallback questions (never hardcoded to Tech for non-tech roles)
+  const fallbackQs = [
+    `Walk me through a challenging situation or project you handled as a ${activeRole} in ${activeIndustry}, and how you applied ${primarySkill} to deliver measurable results.`,
+    `At a ${activeDifficulty} level, how do you balance quality, accuracy, and tight deadlines when working on critical ${activeRound.toLowerCase()} responsibilities as a ${activeRole}?`,
+    `Tell me about a time you navigated a difficult client, colleague, or stakeholder disagreement in your work as a ${activeRole}. What actions did you take and what was the outcome?`
   ];
-  qText.innerText = `"${demoQs[currentQuestionIndex % demoQs.length]}"`;
+  const chosen = fallbackQs[currentQuestionIndex % fallbackQs.length];
+  qText.innerText = `"${chosen}"`;
+  askedQuestions.push(chosen);
+  if (qHint) {
+    qHint.innerHTML = `<i class="fa-solid fa-tag"></i> Key Focus: ${escapeHtml(primarySkill)}, ${escapeHtml(activeIndustry)}, STAR Outcomes`;
+  }
 }
 
 function loadSampleAnswer() {
-  document.getElementById('candidateAnswerText').value = `In my previous role as Senior Full Stack Engineer (Situation), we faced high database latency during peak traffic (Task). I implemented a Redis caching layer for read queries and configured connection pooling (Action). This reduced API response time by 60% for 100k daily users (Result).`;
+  const primarySkill = (activeSkills || activeRole).split(',')[0].trim();
+  const sample = `In my previous role as a ${activeRole} in the ${activeIndustry} sector (Situation), our team faced a critical bottleneck that delayed key deliverables and affected stakeholder satisfaction (Task). I applied ${primarySkill}, audited the existing workflow, and coordinated closely with cross-functional team members to implement a structured improvement plan (Action). As a result, we improved efficiency by 30%, achieved 99% accuracy/compliance, and exceeded our quarterly targets ahead of schedule (Result).`;
+  const area = document.getElementById('candidateAnswerText');
+  if (area) area.value = sample;
 }
 
 async function evaluateCandidateAnswerWithAI(answer) {
@@ -1573,7 +2081,13 @@ async function evaluateCandidateAnswerWithAI(answer) {
       const res = await fetch(`${API_BASE_URL}/api/ai/evaluate-answer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, candidate_answer: answer })
+        body: JSON.stringify({
+          question,
+          candidate_answer: answer,
+          role: activeRole,
+          industry: activeIndustry,
+          difficulty: activeDifficulty
+        })
       });
 
       if (!res.ok) {
@@ -1583,15 +2097,15 @@ async function evaluateCandidateAnswerWithAI(answer) {
 
       const data = await res.json();
       document.getElementById('evalScoreBadge').innerText = `Score: ${data.score}`;
-      document.getElementById('evalStrengths').innerHTML = (data.strengths || []).map(s => `<li>${s}</li>`).join('');
-      document.getElementById('evalMissed').innerHTML = (data.missed || []).map(m => `<li>${m}</li>`).join('');
-      document.getElementById('improvedAnswerText').innerText = `"${data.model_answer}"`;
+      document.getElementById('evalStrengths').innerHTML = (data.strengths || []).map(s => `<li>${escapeHtml(s)}</li>`).join('');
+      document.getElementById('evalMissed').innerHTML = (data.missed || []).map(m => `<li>${escapeHtml(m)}</li>`).join('');
+      document.getElementById('improvedAnswerText').innerText = `"${data.model_answer || ''}"`;
 
       const numScore = parseFloat(data.score);
       if (!isNaN(numScore)) {
         currentRoundScores.push(numScore);
       } else {
-        currentRoundScores.push(8.5);
+        currentRoundScores.push(8.0);
       }
       return;
     } catch (e) {
@@ -1599,10 +2113,13 @@ async function evaluateCandidateAnswerWithAI(answer) {
     }
   }
 
-  document.getElementById('evalScoreBadge').innerText = 'Score: 8.5/10';
-  document.getElementById('evalStrengths').innerHTML = '<li>Used STAR method clearly with situation, action, and result.</li>';
-  document.getElementById('evalMissed').innerHTML = '<li>Could mention specific monitoring/alerting tools used.</li>';
-  currentRoundScores.push(8.5);
+  const wordCount = answer.split(/\s+/).filter(Boolean).length;
+  const fallbackNum = wordCount >= 45 ? 8.2 : wordCount >= 20 ? 6.8 : 5.2;
+  document.getElementById('evalScoreBadge').innerText = `Score: ${fallbackNum.toFixed(1)}/10`;
+  document.getElementById('evalStrengths').innerHTML = `<li>Directly addressed the ${escapeHtml(activeRole)} scenario in ${escapeHtml(activeIndustry)}.</li><li>Structured explanation clearly.</li>`;
+  document.getElementById('evalMissed').innerHTML = `<li>Add concrete numbers or metrics demonstrating measurable impact.</li><li>Highlight specific ${escapeHtml(activeIndustry)} best practices or compliance standards.</li>`;
+  document.getElementById('improvedAnswerText').innerText = `"In my role as a ${activeRole} in ${activeIndustry} (Situation), I led an urgent initiative to improve quality and turnaround time (Task). By applying core domain best practices and aligning key stakeholders (Action), we improved outcomes by 28% within one quarter (Result)."`;
+  currentRoundScores.push(fallbackNum);
 }
 
 /* --------------------------------------------------------------------------
